@@ -82,8 +82,10 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
 
     override fun onPause() {
         super.onPause()
-        if (hcRenderSet) {
+        if(cameraUtil!!.isOpened){
             surfaceViewL.onPause()
+        }
+        if (hcRenderSet) {
             surfaceViewR.onPause()
         }
         unregisterReceiver(broadcastReceiver)
@@ -91,8 +93,10 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
 
     override fun onResume() {
         super.onResume()
-        if (hcRenderSet) {
+        if(cameraUtil!!.isOpened){
             surfaceViewL.onResume()
+        }
+        if (hcRenderSet) {
             surfaceViewR.onResume()
         }
         val intentFilter = IntentFilter(actionSaveBitmap)
