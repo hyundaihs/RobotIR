@@ -83,13 +83,6 @@ class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceVie
     /**
      * this method will be called from native code, it's used for passing yuv data to me.
      */
-//    fun update(bitmap: Bitmap) {
-//        synchronized(this) {
-//
-//        }
-//        // request to render
-//        mTargetSurface.requestRender()
-//    }
 
     fun update(ir_ImageData: IR_ImageData) {
         synchronized(this) {

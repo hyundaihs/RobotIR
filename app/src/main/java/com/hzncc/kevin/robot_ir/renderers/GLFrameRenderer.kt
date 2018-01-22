@@ -5,8 +5,8 @@ import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.util.Log
 import com.hzncc.kevin.robot_ir.createBitmapFromGLSurface
-import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
+import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.saveBitmap
 import com.hzncc.kevin.robot_ir.textures.TextBitmap
 import com.hzncc.kevin.robot_ir.textures.TextureYuv
@@ -95,22 +95,21 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView
      * the video size changes.
      */
     fun update(w: Int, h: Int) {
-        Log.d("tag", "INIT E")
-        if (w > 0 && h > 0) {
-            if (w != mVideoWidth && h != mVideoHeight) {
-                this.mVideoWidth = w
-                this.mVideoHeight = h
-                val yarraySize = w * h
-                val uvarraySize = yarraySize / 4
-                synchronized(this) {
-                    y = ByteBuffer.allocate(yarraySize)
-                    u = ByteBuffer.allocate(uvarraySize)
-                    v = ByteBuffer.allocate(uvarraySize)
+        synchronized(this) {
+            if (w > 0 && h > 0) {
+                if (w != mVideoWidth && h != mVideoHeight) {
+                    this.mVideoWidth = w
+                    this.mVideoHeight = h
+                    val yarraySize = w * h
+                    val uvarraySize = yarraySize / 4
+                    synchronized(this) {
+                        y = ByteBuffer.allocate(yarraySize)
+                        u = ByteBuffer.allocate(uvarraySize)
+                        v = ByteBuffer.allocate(uvarraySize)
+                    }
                 }
             }
         }
-
-        Log.d("tag", "INIT X")
     }
 
     /**
@@ -136,23 +135,6 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView
             }
         }
 
-        // request to render
         mTargetSurface.requestRender()
     }
-
-//    fun update(ir_ImageData: IR_ImageData) {
-//        synchronized(this) {
-//            mTriangle?.updateVertex(ir_ImageData)
-//            maxBitmap = initFontBitmap(ir_ImageData.max_temp.toString(), true)
-//            minBitmap = initFontBitmap(ir_ImageData.min_temp.toString())
-//            if (null != maxBitmap && !maxBitmap!!.isRecycled) {
-//                maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
-//            }
-//            if (null != minBitmap && !minBitmap!!.isRecycled) {
-//                minTexBitmap.updateVertex(ir_ImageData, ir_ImageData.min_x, ir_ImageData.min_y)
-//            }
-//        }
-//        mTargetSurface.requestRender()
-//    }
-
 }
