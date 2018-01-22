@@ -159,7 +159,9 @@ class HcvisionUtil {
                     System.arraycopy(data, 0, y, 0, y.size)
                     System.arraycopy(data, 0 + y.size, v, 0, v.size)
                     System.arraycopy(data, 0 + y.size + v.size, u, 0, u.size)
-                    hcRender.update(y, u, v, App.instance.ir_imageData!!)
+                    if (App.instance.ir_imageData != null) {
+                        hcRender.update(y, u, v, App.instance.ir_imageData!!)
+                    }
                     MainActivity.hcRenderSet = true
                 })) {
                     E("setDecodeCB failed")

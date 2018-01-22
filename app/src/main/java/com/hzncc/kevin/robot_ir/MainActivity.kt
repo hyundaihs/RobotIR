@@ -13,13 +13,13 @@ import android.support.v7.widget.RecyclerView
 import android.view.*
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.data.Log_Data
+import com.hzncc.kevin.robot_ir.jni.CameraUtil
+import com.hzncc.kevin.robot_ir.jni.Device_w324_h256
 import com.hzncc.kevin.robot_ir.jni.HcvisionUtil
+import com.hzncc.kevin.robot_ir.jni.LeptonStatus
 import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
 import com.hzncc.kevin.robot_ir.utils.*
-import com.hzncc.kevin.robot_ir.jni.CameraUtil
-import com.hzncc.kevin.robot_ir.jni.Device_w324_h256
-import com.hzncc.kevin.robot_ir.jni.LeptonStatus
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.per_gallery_list_item.view.*
@@ -29,82 +29,40 @@ import java.io.File
 import java.nio.ByteBuffer
 
 
-class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
+class MainActivity : AppCompatActivity(){
 
     private var maxWarn by Preference("max_warn", 0)
     private var minWarn by Preference("min_warn", 0)
 
-    override fun surfaceRedrawNeeded(holder: SurfaceHolder?) {
-    }
-
-    override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
-
-    }
-
-    override fun surfaceDestroyed(holder: SurfaceHolder?) {
-        closeThread()
-        if (cameraUtil?.getStatus() == LeptonStatus.STATUS_RUNNING) {
-            cameraUtil?.stop()
-            cameraUtil?.close()
-        }
-
-//        I("Player setVideoWindow release!" + m_iPort)
-//        if (-1 == m_iPort) {
-//            return
-//        }
-//        if (true == holder?.getSurface()?.isValid) {
-//            if (false == Player.getInstance().setVideoWindow(m_iPort, 0, null)) {
-//                E("Player setVideoWindow failed!")
-//            }
-//        }
-    }
-
-    override fun surfaceCreated(holder: SurfaceHolder?) {
-
-        if (cameraUtil?.getStatus() != LeptonStatus.STATUS_RUNNING) {
-            cameraUtil?.open("192.168.1.231", 50001)
-            cameraUtil?.start()
-        }
-
-        holder?.setFormat(PixelFormat.TRANSLUCENT)
-//        I("surface is created" + HcvisionUtil.m_iPort)
-//        if (-1 == HcvisionUtil.m_iPort) {
-//            return
-//        }
-//        val surface = holder?.getSurface()
-//        if (true == surface?.isValid) {
-//            if (false == Player.getInstance()
-//                    .setVideoWindow(HcvisionUtil.m_iPort, 0, holder)) {
-//                E("Player setVideoWindow failed!${HcvisionUtil.m_iPort}")
-//            }
-//        }
-    }
-
     override fun onPause() {
         super.onPause()
-        if(cameraUtil!!.isOpened){
-            surfaceViewL.onPause()
-        }
-        if (hcRenderSet) {
-            surfaceViewR.onPause()
-        }
+//        if (null != cameraUtil && cameraUtil!!.isOpened) {
+//            surfaceViewL.onPause()
+//        }
+//        if (hcRenderSet) {
+//            surfaceViewR.onPause()
+//        }
         unregisterReceiver(broadcastReceiver)
     }
 
     override fun onResume() {
         super.onResume()
-        if(cameraUtil!!.isOpened){
-            surfaceViewL.onResume()
-        }
-        if (hcRenderSet) {
-            surfaceViewR.onResume()
-        }
+//        if (null != cameraUtil && cameraUtil!!.isOpened) {
+//            surfaceViewL.onResume()
+//        }
+//        if (hcRenderSet) {
+//            surfaceViewR.onResume()
+//        }
         val intentFilter = IntentFilter(actionSaveBitmap)
         registerReceiver(broadcastReceiver, intentFilter)
     }
 
     override fun onDestroy() {
         closeThread()
+        cameraUtil.close()
+        hcvisionUtil.stopPreview()
+        surfaceViewL.onPause()
+        surfaceViewR.onPause()
         super.onDestroy()
     }
 
@@ -128,13 +86,14 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
         hcRender = GLFrameRenderer(surfaceViewR)
         surfaceViewR.setRenderer(hcRender)
         surfaceViewR.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY)
-        val hcvisionUtil = HcvisionUtil()
+        hcvisionUtil = HcvisionUtil()
+        cameraUtil = CameraUtil(Device_w324_h256())
         openThread()
         open.setOnClickListener {
-            if (!cameraUtil!!.isOpened || HcvisionUtil.m_iLogID < 0) {
+            if (!cameraUtil.isOpened || HcvisionUtil.m_iLogID < 0) {
                 doAsync {
-                    cameraUtil?.open("192.168.1.231", 50001)
-                    cameraUtil?.start()
+                    cameraUtil.open("192.168.1.231", 50001)
+                    cameraUtil.start()
 
                     if (hcvisionUtil.init()) {
                         E("init success")
@@ -159,7 +118,7 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
                 }
             } else {
                 doAsync {
-                    cameraUtil?.close()
+                    cameraUtil.close()
                     hcvisionUtil.stopPreview()
                     uiThread {
                         open.text = "开启监控"
@@ -234,6 +193,8 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
     private val minData = ArrayList<Int>()
     private var adapter: MyAdapter? = null
     val broadcastReceiver: MyBroadcastReceiver = MyBroadcastReceiver()
+    lateinit var hcvisionUtil: HcvisionUtil
+    lateinit var cameraUtil: CameraUtil
 
     companion object {
         var viewWidth = 0
@@ -246,7 +207,7 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
         var offSize = 0
         var rateW = 0f
         var rateH = 0f
-        var cameraUtil: CameraUtil? = null
+
         var hcRenderSet = false
         var isWarn = false
 
@@ -268,7 +229,6 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
     }
 
     fun initDraw(surfaceView: SurfaceView) {
-        cameraUtil = CameraUtil(Device_w324_h256())
         viewWidth = surfaceView.getWidth()
         viewHeight = surfaceView.getHeight()
         isRun = true
@@ -297,8 +257,8 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
     }
 
     fun measureRate() {
-        rateW = viewWidth.toFloat() / cameraUtil?.getDeviceInfo()?.width!!
-        rateH = viewHeight.toFloat() / cameraUtil?.getDeviceInfo()?.height!!
+        rateW = viewWidth.toFloat() / cameraUtil.getDeviceInfo()?.width!!
+        rateH = viewHeight.toFloat() / cameraUtil.getDeviceInfo()?.height!!
     }
 
 
@@ -307,7 +267,7 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
             synchronized(surfaceViewL) {
                 initDraw(surfaceViewL)
                 while (isRun) {
-                    if (cameraUtil?.getStatus() == LeptonStatus.STATUS_RUNNING) {
+                    if (cameraUtil.getStatus() == LeptonStatus.STATUS_RUNNING) {
                         App.instance.ir_imageData = getNext()
                         if (isWarn) {
                             if (App.instance.ir_imageData!!.max_temp >= maxWarn || App.instance.ir_imageData!!.min_temp <= minWarn) {
@@ -330,11 +290,11 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
 
     private fun getNext(): IR_ImageData {
         val ir_ImageData = IR_ImageData()
-        val raw = ShortArray(cameraUtil?.deviceInfo?.raw_length!!)
-        cameraUtil?.nextFrame(raw)
+        val raw = ShortArray(cameraUtil.deviceInfo?.raw_length!!)
+        cameraUtil.nextFrame(raw)
 
-        val bmp = ByteArray(cameraUtil?.deviceInfo?.bmp_length!!)
-        cameraUtil?.img_14To8(raw, bmp)
+        val bmp = ByteArray(cameraUtil.deviceInfo?.bmp_length!!)
+        cameraUtil.img_14To8(raw, bmp)
         //        createFileWithByte(bmp)
         //        Bitmap bitmap = Bitmap.createBitmap(bmp, cameraUtil?.getDeviceInfo().width,
         //                cameraUtil?.getDeviceInfo().height, Bitmap.Config.RGB_565)
@@ -346,12 +306,12 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback2 {
         ir_ImageData.bitmap = bitmap
         ir_ImageData.width = bitmap.width
         ir_ImageData.height = bitmap.height
-        ir_ImageData.max_x = cameraUtil?.maxX!!
-        ir_ImageData.max_y = cameraUtil?.maxY!!
-        ir_ImageData.min_x = cameraUtil?.minX!!
-        ir_ImageData.min_y = cameraUtil?.minY!!
-        ir_ImageData.max_temp = cameraUtil?.maxTemp!!
-        ir_ImageData.min_temp = cameraUtil?.minTemp!!
+        ir_ImageData.max_x = cameraUtil.maxX
+        ir_ImageData.max_y = cameraUtil.maxY
+        ir_ImageData.min_x = cameraUtil.minX
+        ir_ImageData.min_y = cameraUtil.minY
+        ir_ImageData.max_temp = cameraUtil.maxTemp
+        ir_ImageData.min_temp = cameraUtil.minTemp
         return ir_ImageData
     }
 

@@ -16,12 +16,13 @@ import org.jetbrains.anko.toast
  */
 
 class App : Application() {
-    var ir_imageData: IR_ImageData? = null
+    lateinit var ir_imageData: IR_ImageData
     val mData = ArrayList<Log_Data>()
 
     override fun onCreate() {
         super.onCreate()
         instance = this
+        ir_imageData = IR_ImageData()
         SDCardUtil.initAll()
         checkPermission()
     }
