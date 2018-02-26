@@ -1,6 +1,7 @@
 package com.hzncc.kevin.frareddemo;
 
 import android.graphics.Canvas;
+import android.view.Surface;
 
 /**
  * FraredDemo
@@ -179,6 +180,17 @@ public class CameraSDK {
     public static native int img_14To565(long handle, short[] rawData, int[] rgbData);
 
     /**
+     * 14位图转565图像
+     *
+     * @param handle  句柄
+     * @param rawData raw 数据
+     * @param rgbData 转换后的数据
+     * @return 返回成功失败
+     */
+    public static native int img_14To565ToShort(long handle, short[] rawData, short[] rgbData);
+
+
+    /**
      * 获取当前调色板
      *
      * @return 数组中的坐标
@@ -215,5 +227,12 @@ public class CameraSDK {
      * @return 帧号
      */
     public static native int getCurrentFrameNum(long handle);
+
+    /**
+     * 设置显示的Surface
+     * @return 是否成功
+     */
+    public static native boolean setVideoSurface(Surface surface);
+    public static native int pushImage(byte[] raw,int length);
 
 }

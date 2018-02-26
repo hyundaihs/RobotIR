@@ -1,9 +1,12 @@
 package com.hzncc.kevin.robot_ir.textures
 
+import android.content.Context
 import android.opengl.GLES20
-import com.hzncc.kevin.robot_ir.getFloatBuffer
+import com.hzncc.kevin.robot_ir.R
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
+import com.hzncc.kevin.robot_ir.getFloatBuffer
 import com.hzncc.kevin.robot_ir.loadShader
+import com.hzncc.kevin.robot_ir.utils.TextResourceReader
 import java.nio.FloatBuffer
 
 /**
@@ -11,7 +14,7 @@ import java.nio.FloatBuffer
  * Created by 蔡雨峰 on 2018/1/16.
  */
 
-class Triangle {
+class Triangle(val context: Context) {
 
     private val vertexCount = maxCoords.size / COORDS_PER_VERTEX
     private val vertexStride = COORDS_PER_VERTEX * 4 // 4 bytes per vertex
@@ -28,11 +31,13 @@ class Triangle {
         // 初始化顶点字节缓冲区，用于存放形状的坐标
         maxBuffer = getFloatBuffer(maxCoords)
         mixBuffer = getFloatBuffer(mixCoords)
+        val vertex_shader = TextResourceReader.readTextFileFromResource(context, R.raw.vertex_shader_shape)
+        val fragment_shader = TextResourceReader.readTextFileFromResource(context, R.raw.fragment_shader_shape)
         // 编译shader代码
         val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER,
-                vertexShaderCode)
+                vertex_shader)
         val fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER,
-                fragmentShaderCode)
+                fragment_shader)
 
         // 创建空的OpenGL ES Program
         mProgram = GLES20.glCreateProgram()
@@ -162,15 +167,5 @@ class Triangle {
                 0.0f, 0.0f, //
                 0.0f, 0.0f
         )
-
-        private val vertexShaderCode = "attribute vec4 vPosition;" +
-                "void main() {" +
-                "  gl_Position = vPosition;" +
-                "}"
-        private val fragmentShaderCode = "precision mediump float;" +
-                "uniform vec4 vColor;" +
-                "void main() {" +
-                "  gl_FragColor = vColor;" +
-                "}"
     }
 }

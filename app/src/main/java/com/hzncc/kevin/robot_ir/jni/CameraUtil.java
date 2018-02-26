@@ -119,6 +119,13 @@ public class CameraUtil {
         return CameraSDK.img_14To565(handle, rawData, rgbData);
     }
 
+    public int img_14To565(short[] rawData, short[] rgbData) {
+        if (handle == -1) {
+            return -1;
+        }
+        return CameraSDK.img_14To565ToShort(handle, rawData, rgbData);
+    }
+
     /**
      * 获取最高温坐标
      *

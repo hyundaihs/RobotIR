@@ -33,11 +33,11 @@ class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceVie
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         if (!prog.isProgramBuilt) {
-            prog.buildProgram()
-            maxTexBitmap.buildProgram()
-            minTexBitmap.buildProgram()
+            prog.buildProgram(mTargetSurface.context)
+            maxTexBitmap.buildProgram(mTargetSurface.context)
+            minTexBitmap.buildProgram(mTargetSurface.context)
             //初始化三角形
-            mTriangle = Triangle()
+            mTriangle = Triangle(mTargetSurface.context)
             Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }

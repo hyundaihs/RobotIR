@@ -12,6 +12,8 @@ import com.hzncc.kevin.robot_ir.textures.TextBitmap
 import com.hzncc.kevin.robot_ir.textures.TextureRGB
 import com.hzncc.kevin.robot_ir.textures.Triangle
 import java.nio.ByteBuffer
+import java.nio.IntBuffer
+import java.nio.ShortBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -23,7 +25,7 @@ class GLRGBRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.R
     private val prog = TextureRGB()
     private var maxTexBitmap = TextBitmap()
     private var minTexBitmap = TextBitmap()
-    private var buffer: ByteBuffer? = null
+    private var buffer: ShortBuffer? = null
     private var maxBitmap: Bitmap? = null
     private var minBitmap: Bitmap? = null
     private var mTriangle: Triangle? = null
@@ -35,11 +37,11 @@ class GLRGBRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.R
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         if (!prog.isProgramBuilt) {
-            prog.buildProgram()
-            maxTexBitmap.buildProgram()
-            minTexBitmap.buildProgram()
+            prog.buildProgram(mTargetSurface.context)
+            maxTexBitmap.buildProgram(mTargetSurface.context)
+            minTexBitmap.buildProgram(mTargetSurface.context)
             //初始化三角形
-            mTriangle = Triangle()
+            mTriangle = Triangle(mTargetSurface.context)
             Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }

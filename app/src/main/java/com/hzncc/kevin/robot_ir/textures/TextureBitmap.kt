@@ -1,11 +1,14 @@
 package com.hzncc.kevin.robot_ir.textures
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLUtils
 import android.util.Log
+import com.hzncc.kevin.robot_ir.R
 import com.hzncc.kevin.robot_ir.getByteBuffer
 import com.hzncc.kevin.robot_ir.loadShader
+import com.hzncc.kevin.robot_ir.utils.TextResourceReader
 import java.nio.ByteBuffer
 
 
@@ -23,11 +26,13 @@ class TextureBitmap {
     private var _vertice_buffer: ByteBuffer? = null
     private var _coord_buffer: ByteBuffer? = null
 
-    fun buildProgram() {
+    fun buildProgram(context: Context) {
         _vertice_buffer = getByteBuffer(squareVertices)
         _coord_buffer = getByteBuffer(coordVertices)
         if (_program <= 0) {
-            _program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
+            val vertex_shader = TextResourceReader.readTextFileFromResource(context, R.raw.vertex_shader_rgb)
+            val fragment_shader = TextResourceReader.readTextFileFromResource(context, R.raw.fragment_shader_rgb)
+            _program = createProgram(vertex_shader, fragment_shader)
         }
         getHandles()
         isProgramBuilt = true
@@ -135,6 +140,7 @@ class TextureBitmap {
         GLES20.glVertexAttribPointer(attribTexCoord, 2, GLES20.GL_FLOAT, false, 8, _coord_buffer)
         checkGlError("glVertexAttribPointer maTextureHandle")
         GLES20.glEnableVertexAttribArray(attribTexCoord)
+
         // bind textures
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + 0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _tid)
@@ -166,24 +172,5 @@ class TextureBitmap {
 
         private val coordVertices = floatArrayOf(0.0f, rBold, 1.0f, rBold, 0.0f, lBold, 1.0f, lBold)// whole-texture
 
-        private val VERTEX_SHADER = ("uniform mat4 u_MVPMatrix;\n" +
-                "\n" +
-                "attribute vec4 a_position;\n" +
-                "attribute vec2 a_texCoord;\n" +
-                "varying vec2 v_texCoord;\n" +
-                "void main()\n" +
-                "{\n" +
-                "gl_Position = a_position;\n" +
-                "v_texCoord = a_texCoord;\n" +
-                "}")
-
-        private val FRAGMENT_SHADER = ("precision lowp float;\n" +
-                "\n" +
-                "varying vec2 v_texCoord;\n" +
-                "uniform sampler2D u_samplerTexture;\n" +
-                "void main()\n" +
-                "{\n" +
-                "gl_FragColor = texture2D(u_samplerTexture, v_texCoord);\n" +
-                "}")
     }
 }

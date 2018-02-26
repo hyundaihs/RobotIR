@@ -20,7 +20,7 @@ class HcvisionUtil {
         var m_iPort = -1
         var m_oNetDvrDeviceInfoV30: NET_DVR_DEVICEINFO_V30? = null
 
-        val m_oIPAddr = "192.168.1.64"
+        val m_oIPAddr = "192.168.3.64"
         val m_oPort = 8000
         val m_oUser = "admin"
         val m_oPsd = "admin123456"
@@ -159,9 +159,7 @@ class HcvisionUtil {
                     System.arraycopy(data, 0, y, 0, y.size)
                     System.arraycopy(data, 0 + y.size, v, 0, v.size)
                     System.arraycopy(data, 0 + y.size + v.size, u, 0, u.size)
-                    if (App.instance.ir_imageData != null) {
-                        hcRender.update(y, u, v, App.instance.ir_imageData!!)
-                    }
+                    hcRender.update(y, u, v, App.instance.ir_imageData)
                     MainActivity.hcRenderSet = true
                 })) {
                     E("setDecodeCB failed")

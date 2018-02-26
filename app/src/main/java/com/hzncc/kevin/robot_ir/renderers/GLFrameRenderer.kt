@@ -38,13 +38,13 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         // 设置清屏颜色为黑色
-        GLES20.glClearColor(0f, 0f, 0f, 0f);
+        GLES20.glClearColor(0f, 0f, 0f, 0f)
         if (!prog.isProgramBuilt) {
-            prog.buildProgram()
-            maxTexBitmap.buildProgram()
-            minTexBitmap.buildProgram()
+            prog.buildProgram(mTargetSurface.context)
+            maxTexBitmap.buildProgram(mTargetSurface.context)
+            minTexBitmap.buildProgram(mTargetSurface.context)
             //初始化三角形
-            mTriangle = Triangle()
+            mTriangle = Triangle(mTargetSurface.context)
             Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }
@@ -124,17 +124,31 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView
             u!!.put(udata, 0, udata.size)
             v!!.put(vdata, 0, vdata.size)
 
-            mTriangle?.updateVertex(ir_ImageData)
-            maxBitmap = initFontBitmap(ir_ImageData.max_temp.toString(), true)
-            minBitmap = initFontBitmap(ir_ImageData.min_temp.toString())
-            if (null != maxBitmap && !maxBitmap!!.isRecycled) {
-                maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
-            }
-            if (null != minBitmap && !minBitmap!!.isRecycled) {
-                minTexBitmap.updateVertex(ir_ImageData, ir_ImageData.min_x, ir_ImageData.min_y)
-            }
+//            mTriangle?.updateVertex(ir_ImageData)
+//            maxBitmap = initFontBitmap(ir_ImageData.max_temp.toString(), true)
+//            minBitmap = initFontBitmap(ir_ImageData.min_temp.toString())
+//            if (null != maxBitmap && !maxBitmap!!.isRecycled) {
+//                maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
+//            }
+//            if (null != minBitmap && !minBitmap!!.isRecycled) {
+//                minTexBitmap.updateVertex(ir_ImageData, ir_ImageData.min_x, ir_ImageData.min_y)
+//            }
         }
 
         mTargetSurface.requestRender()
     }
+
+    fun update(ir_ImageData: IR_ImageData){
+        mTriangle?.updateVertex(ir_ImageData)
+        maxBitmap = initFontBitmap(ir_ImageData.max_temp.toString(), true)
+        minBitmap = initFontBitmap(ir_ImageData.min_temp.toString())
+        if (null != maxBitmap && !maxBitmap!!.isRecycled) {
+            maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
+        }
+        if (null != minBitmap && !minBitmap!!.isRecycled) {
+            minTexBitmap.updateVertex(ir_ImageData, ir_ImageData.min_x, ir_ImageData.min_y)
+        }
+        mTargetSurface.requestRender()
+    }
+
 }

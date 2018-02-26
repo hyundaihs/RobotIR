@@ -1,9 +1,12 @@
 package com.hzncc.kevin.robot_ir.textures
 
+import android.content.Context
 import android.opengl.GLES20
 import android.util.Log
+import com.hzncc.kevin.robot_ir.R
 import com.hzncc.kevin.robot_ir.getByteBuffer
 import com.hzncc.kevin.robot_ir.loadShader
+import com.hzncc.kevin.robot_ir.utils.TextResourceReader
 import java.nio.Buffer
 import java.nio.ByteBuffer
 
@@ -33,11 +36,13 @@ class TextureYuv {
     private var _tIIindex: Int = 1
     private var _tIIIindex: Int = 2
 
-    fun buildProgram() {
+    fun buildProgram(context: Context) {
         _vertice_buffer = getByteBuffer(squareVertices)
         _coord_buffer = getByteBuffer(coordVertices)
         if (_program <= 0) {
-            _program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
+            val vertex_shader = TextResourceReader.readTextFileFromResource(context, R.raw.vertex_shader_yuv)
+            val fragment_shader = TextResourceReader.readTextFileFromResource(context, R.raw.fragment_shader_yuv)
+            _program = createProgram(vertex_shader, fragment_shader)
         }
         getHandles()
         isProgramBuilt = true
@@ -247,14 +252,5 @@ class TextureYuv {
 
         private val coordVertices = floatArrayOf(lBold, 1.0f, rBold, 1.0f, lBold, 0.0f, rBold, 0.0f)// whole-texture
 
-        private val VERTEX_SHADER = ("attribute vec4 vPosition;\n" + "attribute vec2 a_texCoord;\n"
-                + "varying vec2 tc;\n" + "void main() {\n" + "gl_Position = vPosition;\n" + "tc = a_texCoord;\n" + "}\n")
-
-        private val FRAGMENT_SHADER = ("precision mediump float;\n" + "uniform sampler2D tex_y;\n"
-                + "uniform sampler2D tex_u;\n" + "uniform sampler2D tex_v;\n" + "varying vec2 tc;\n" + "void main() {\n"
-                + "vec4 c = vec4((texture2D(tex_y, tc).r - 16./255.) * 1.164);\n"
-                + "vec4 U = vec4(texture2D(tex_u, tc).r - 128./255.);\n"
-                + "vec4 V = vec4(texture2D(tex_v, tc).r - 128./255.);\n" + "c += V * vec4(1.596, -0.813, 0, 0);\n"
-                + "c += U * vec4(0, -0.392, 2.017, 0);\n" + "c.a = 1.0;\n" + "gl_FragColor = c;\n" + "}\n")
     }
 }

@@ -1,12 +1,15 @@
 package com.hzncc.kevin.robot_ir.textures
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLUtils
 import android.util.Log
+import com.hzncc.kevin.robot_ir.R
 import com.hzncc.kevin.robot_ir.getByteBuffer
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.loadShader
+import com.hzncc.kevin.robot_ir.utils.TextResourceReader
 import java.nio.ByteBuffer
 
 /**
@@ -23,11 +26,13 @@ class TextBitmap {
     private var _vertex_buffer: ByteBuffer? = null
     private var _coord_buffer: ByteBuffer? = null
 
-    fun buildProgram() {
+    fun buildProgram(context: Context) {
         _vertex_buffer = getByteBuffer(squareVertices)
         _coord_buffer = getByteBuffer(coordVertices)
         if (_program <= 0) {
-            _program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
+            val vertex_shader = TextResourceReader.readTextFileFromResource(context, R.raw.vertex_shader_rgb)
+            val fragment_shader = TextResourceReader.readTextFileFromResource(context, R.raw.fragment_shader_rgb)
+            _program = createProgram(vertex_shader, fragment_shader)
         }
         getHandles()
         isProgramBuilt = true
@@ -227,24 +232,5 @@ class TextBitmap {
 
         private val coordVertices = floatArrayOf(0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f)// whole-texture
 
-        private val VERTEX_SHADER = ("uniform mat4 u_MVPMatrix;\n" +
-                "\n" +
-                "attribute vec4 a_position;\n" +
-                "attribute vec2 a_texCoord;\n" +
-                "varying vec2 v_texCoord;\n" +
-                "void main()\n" +
-                "{\n" +
-                "gl_Position = a_position;\n" +
-                "v_texCoord = a_texCoord;\n" +
-                "}")
-
-        private val FRAGMENT_SHADER = ("precision lowp float;\n" +
-                "\n" +
-                "varying vec2 v_texCoord;\n" +
-                "uniform sampler2D u_samplerTexture;\n" +
-                "void main()\n" +
-                "{\n" +
-                "gl_FragColor = texture2D(u_samplerTexture, v_texCoord);\n" +
-                "}")
     }
 }
