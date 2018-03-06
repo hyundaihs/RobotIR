@@ -19,7 +19,7 @@ import javax.microedition.khronos.opengles.GL10
  * Robot
  * Created by 蔡雨峰 on 2018/1/16.
  */
-class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.Renderer {
+class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView? = null) : GLSurfaceView.Renderer {
     private val prog = TextureBitmap()
     private var maxTexBitmap = TextBitmap()
     private var minTexBitmap = TextBitmap()
@@ -27,17 +27,15 @@ class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceVie
     private var maxBitmap: Bitmap? = null
     private var minBitmap: Bitmap? = null
     private var mTriangle: Triangle? = null
-    private var isTakePicture = false
-    private var fileName: String = ""
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         if (!prog.isProgramBuilt) {
-            prog.buildProgram(mTargetSurface.context)
-            maxTexBitmap.buildProgram(mTargetSurface.context)
-            minTexBitmap.buildProgram(mTargetSurface.context)
+            prog.buildProgram()
+            maxTexBitmap.buildProgram()
+            minTexBitmap.buildProgram()
             //初始化三角形
-            mTriangle = Triangle(mTargetSurface.context)
+            mTriangle = Triangle()
             Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }
@@ -47,20 +45,8 @@ class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceVie
         GLES20.glViewport(0, 0, width, height)
     }
 
-    fun takePicture(fileName: String) {
-        if (!isTakePicture) {
-            this.fileName = fileName
-            isTakePicture = true
-        }
-    }
-
     override fun onDrawFrame(gl: GL10) {
         synchronized(this) {
-            if (isTakePicture) {
-                val bmp = createBitmapFromGLSurface(0, 0, mTargetSurface.width, mTargetSurface.height, gl)
-                saveBitmap(mTargetSurface.context, fileName, bmp!!, true)
-                isTakePicture = false
-            }
             if (null != bitmap && !bitmap!!.isRecycled) {
                 prog.buildTextures(bitmap!!)
             }
@@ -88,8 +74,8 @@ class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceVie
         synchronized(this) {
             bitmap = ir_ImageData.bitmap
             mTriangle?.updateVertex(ir_ImageData)
-            maxBitmap = initFontBitmap(ir_ImageData.max_temp.toString(), true)
-            minBitmap = initFontBitmap(ir_ImageData.min_temp.toString())
+            maxBitmap = initFontBitmap(ir_ImageData.max_temp, true)
+            minBitmap = initFontBitmap(ir_ImageData.min_temp)
             if (null != maxBitmap && !maxBitmap!!.isRecycled) {
                 maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
             }
@@ -97,7 +83,7 @@ class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceVie
                 minTexBitmap.updateVertex(ir_ImageData, ir_ImageData.min_x, ir_ImageData.min_y)
             }
         }
-        mTargetSurface.requestRender()
+        mTargetSurface?.requestRender()
     }
 
 }

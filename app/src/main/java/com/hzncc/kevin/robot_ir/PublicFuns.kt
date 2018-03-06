@@ -1,17 +1,23 @@
 package com.hzncc.kevin.robot_ir
 
 import android.app.ActivityManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.opengl.GLES20
 import android.opengl.GLException
 import android.util.Log
+import android.widget.Toast
 import com.bigkoo.pickerview.OptionsPickerView
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
-import com.hzncc.kevin.robot_ir.utils.BitmapUtil
+import com.hzncc.kevin.robot_ir.data.Log_Data
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
-import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.runOnUiThread
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -23,16 +29,20 @@ import javax.microedition.khronos.opengles.GL10
  * Robot
  * Created by 蔡雨峰 on 2018/1/8.
  */
-fun Any.D(msg: String) {
-    Log.d(this.javaClass.simpleName, msg)
+fun Any.D(msg: String, tag: String = this.javaClass.simpleName) {
+    Log.d(tag, msg)
 }
 
-fun Any.E(msg: String) {
-    Log.e(this.javaClass.simpleName, msg)
+fun Any.E(msg: String, tag: String = this.javaClass.simpleName) {
+    Log.e(tag, msg)
 }
 
-fun Any.I(msg: String) {
-    Log.i(this.javaClass.simpleName, msg)
+fun Any.I(msg: String, tag: String = this.javaClass.simpleName) {
+    Log.i(tag, msg)
+}
+
+fun Any.V(msg: String, tag: String = this.javaClass.simpleName) {
+    Log.v(tag, msg)
 }
 
 fun Any.detectOpenGLES20(context: Context): Boolean {
@@ -95,7 +105,7 @@ fun Any.loadShader(shaderType: Int, source: String): Int {
 /**
  * android中绘制字体，使用画布canvas
  */
-fun Any.initFontBitmap(font: String, isMax: Boolean = false): Bitmap {
+fun Any.initFontBitmap(temp: Float, isMax: Boolean = false): Bitmap {
     val p = Paint()
     //字体设置
     val fontType = "宋体"
@@ -107,6 +117,7 @@ fun Any.initFontBitmap(font: String, isMax: Boolean = false): Bitmap {
     p.setTypeface(typeface)
     p.setTextSize(28f)
     val rect = Rect()
+    val font = String.format("%.2f", temp)
     p.getTextBounds(font, 0, font.length, rect)
 
     val textBitmap = Bitmap.createBitmap(rect.width() + 6, rect.height() + 6, Bitmap.Config.ARGB_8888)
@@ -121,6 +132,19 @@ fun Any.initFontBitmap(font: String, isMax: Boolean = false): Bitmap {
     //绘制字体
     canvas.drawText(font, 3f, rect.height().toFloat() + 3, p)
     return textBitmap
+}
+
+
+fun Context.isApplicationInBackground(): Boolean {
+    val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    val taskList = am.getRunningTasks(1)
+    if (taskList != null && !taskList.isEmpty()) {
+        val topActivity = taskList.get(0).topActivity as ComponentName
+        if (!topActivity.getPackageName().equals(getPackageName())) {
+            return true
+        }
+    }
+    return false
 }
 
 fun Any.createBitmapFromGLSurface(x: Int, y: Int, w: Int, h: Int, gl: GL10): Bitmap? {
@@ -153,18 +177,55 @@ fun Any.createBitmapFromGLSurface(x: Int, y: Int, w: Int, h: Int, gl: GL10): Bit
 
 val actionSaveBitmap: String = "ACTION_SAVE_BITMAP"
 
-fun Any.saveBitmap(context: Context, fileName: String, bitmap: Bitmap, isIR: Boolean = false) {
-    doAsync {
-        var path = ""
-        if (isIR) {
-            path = SDCardUtil.IMAGE_IR
-        } else {
-            path = SDCardUtil.IMAGE_VL
-        }
-        BitmapUtil.saveBitmap(path, fileName, bitmap)
+//fun Any.saveBitmap(context: Context, fileName: String, bitmap: Bitmap, isIR: Boolean = false) {
+//    doAsync {
+//        var path = ""
+//        if (isIR) {
+//            path = SDCardUtil.IMAGE_IR
+//        } else {
+//            path = SDCardUtil.IMAGE_VL
+//        }
+//        BitmapUtil.saveBitmap(path, fileName, bitmap)
+//        val intent = Intent(actionSaveBitmap)
+//        intent.putExtra("fileName", fileName)
+//        context.sendBroadcast(intent)
+//    }
+//}
+
+var saveName = ""
+
+//图片保存
+fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false) {
+    var path = ""
+    if (isIR) {
+        path = SDCardUtil.IMAGE_IR
+    } else {
+        path = SDCardUtil.IMAGE_VL
+    }
+    val folder = File(path)
+    if (!folder.exists()) {
+        E("save bitmap failed,path is not exist")
+        return
+    }
+    val jpegName = path + fileName
+    try {
+        val fout = FileOutputStream(jpegName)
+        val bos = BufferedOutputStream(fout)
+        b.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+        bos.flush()
+        bos.close()
+    } catch (e: IOException) {
+        e.printStackTrace()
+    }
+    if (saveName == fileName) {
+        App.instance.mData.add(0, Log_Data(fileName, fileName))
         val intent = Intent(actionSaveBitmap)
-        intent.putExtra("fileName", fileName)
-        context.sendBroadcast(intent)
+        sendBroadcast(intent)
+    } else {
+        saveName = fileName
+    }
+    runOnUiThread {
+        Toast.makeText(this, "报警图片保存成功->" + jpegName, Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -185,7 +246,6 @@ fun Context.showPicker(selected: Int = 1, list: List<Int>, isMax: Boolean, liste
 //                .setTitleBgColor(-0xcccccd)//标题背景颜色 Night mode
 //                .setBgColor(-0x1000000)//滚轮背景颜色 Night mode
             .setContentTextSize(18)//滚轮文字大小
-            .setLinkage(false)//设置是否联动，默认true
             //                .setLabels("省", "市", "区")//设置选择的三级单位
             //                .isCenterLabel(false) //是否只显示中间选中项的label文字，false则每项item全部都带有label。
             .setCyclic(false, false, false)//循环与否
@@ -196,5 +256,59 @@ fun Context.showPicker(selected: Int = 1, list: List<Int>, isMax: Boolean, liste
     pvOptions.setPicker(list)//添加数据源
     pvOptions.show()
 }
+
+val sign: List<String> = arrayListOf("-", "+")
+val nums: List<String> = arrayListOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+
+fun Any.getCorrectTemp(option1: Int, option2: Int, option3: Int): Float {
+    var rel = 0.1f
+    if (option1 == 0) {
+        rel = rel * option3 + option2 * -1
+    } else {
+        rel = rel * option3 + option2
+    }
+    return rel
+}
+
+fun Any.getCorrentIndex(tempra: Float, rel: IntArray) {
+    if (tempra > 0) {
+        rel[0] = 1
+    } else {
+        rel[0] = 0
+    }
+    rel[1] = (tempra / 1).toInt()
+    rel[2] = ((tempra - rel[1]) * 10).toInt()
+}
+
+/**
+ * 温度补偿选择器
+ */
+fun Context.showTempPicker(selected1: Int = 1, selected2: Int = 1, selected3: Int = 1, listener: (Int, Int, Int) -> Unit) {
+    val pvOptions = OptionsPickerView.Builder(this, OptionsPickerView.OnOptionsSelectListener { options1, option2, options3, v ->
+        //返回的分别是三个级别的选中位置
+        listener.invoke(options1, option2, options3)
+    })
+            .setSubmitText("确定")//确定按钮文字
+            .setCancelText("取消")//取消按钮文字
+            .setTitleText("温度补偿")//标题
+            .setSubCalSize(18)//确定和取消文字大小
+            .setTitleSize(20)//标题文字大小
+            .setTitleColor(Color.BLACK)//标题文字颜色
+            .setSubmitColor(Color.BLUE)//确定按钮文字颜色
+            .setCancelColor(Color.BLUE)//取消按钮文字颜色
+//                .setTitleBgColor(-0xcccccd)//标题背景颜色 Night mode
+//                .setBgColor(-0x1000000)//滚轮背景颜色 Night mode
+            .setContentTextSize(18)//滚轮文字大小
+            .setLabels("", ".", "")//设置选择的三级单位
+            .isCenterLabel(true) //是否只显示中间选中项的label文字，false则每项item全部都带有label。
+            .setCyclic(false, false, false)//循环与否
+            .setSelectOptions(selected1, selected2, selected3)  //设置默认选中项
+            .setOutSideCancelable(true)//点击外部dismiss default true
+            .isDialog(true)//是否显示为对话框样式
+            .build()
+    pvOptions.setNPicker(sign, nums, nums)//添加数据源
+    pvOptions.show()
+}
+
 
 

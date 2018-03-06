@@ -3,6 +3,7 @@ package com.hzncc.kevin.robot_ir.textures
 import android.content.Context
 import android.opengl.GLES20
 import android.util.Log
+import com.hzncc.kevin.robot_ir.App
 import com.hzncc.kevin.robot_ir.R
 import com.hzncc.kevin.robot_ir.getByteBuffer
 import com.hzncc.kevin.robot_ir.loadShader
@@ -36,12 +37,12 @@ class TextureYuv {
     private var _tIIindex: Int = 1
     private var _tIIIindex: Int = 2
 
-    fun buildProgram(context: Context) {
+    fun buildProgram() {
         _vertice_buffer = getByteBuffer(squareVertices)
         _coord_buffer = getByteBuffer(coordVertices)
         if (_program <= 0) {
-            val vertex_shader = TextResourceReader.readTextFileFromResource(context, R.raw.vertex_shader_yuv)
-            val fragment_shader = TextResourceReader.readTextFileFromResource(context, R.raw.fragment_shader_yuv)
+            val vertex_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.vertex_shader_yuv)
+            val fragment_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.fragment_shader_yuv)
             _program = createProgram(vertex_shader, fragment_shader)
         }
         getHandles()

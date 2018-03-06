@@ -25,6 +25,9 @@ class HcvisionUtil {
         val m_oUser = "admin"
         val m_oPsd = "admin123456"
 
+        var width = 0
+        var height = 0
+
     }
 
     fun init(): Boolean {
@@ -150,16 +153,16 @@ class HcvisionUtil {
                 if (!Player.getInstance().setDecodeCB(m_iPort, PlayerCallBack.PlayerDecodeCB { //
                     nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
                     ->
-                    //                    D("解码类型:$nDataType")
-//                    val datas = java.nio.ByteBuffer.wrap
-                    hcRender.update(nWidth, nHeight)
-                    val y = ByteArray(nWidth * nHeight)
-                    val v = ByteArray(y.size / 4)
-                    val u = ByteArray(y.size / 4)
-                    System.arraycopy(data, 0, y, 0, y.size)
-                    System.arraycopy(data, 0 + y.size, v, 0, v.size)
-                    System.arraycopy(data, 0 + y.size + v.size, u, 0, u.size)
-                    hcRender.update(y, u, v, App.instance.ir_imageData)
+                    width = nWidth
+                    height = nHeight
+                    hcRender.update(nWidth,nHeight)
+                    App.yData = ByteArray(nWidth * nHeight)
+                    App.vData = ByteArray(App.yData.size / 4)
+                    App.uData = ByteArray(App.yData.size / 4)
+                    System.arraycopy(data, 0, App.yData, 0, App.yData.size)
+                    System.arraycopy(data, 0 + App.yData.size, App.vData, 0, App.vData.size)
+                    System.arraycopy(data, 0 + App.yData.size + App.vData.size, App.uData, 0, App.uData.size)
+                    hcRender.update(App.yData, App.uData, App.vData, App.ir_imageData)
                     MainActivity.hcRenderSet = true
                 })) {
                     E("setDecodeCB failed")

@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.util.Log
-import com.hzncc.kevin.robot_ir.createBitmapFromGLSurface
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.saveBitmap
@@ -20,7 +19,7 @@ import javax.microedition.khronos.opengles.GL10
  * Created by 蔡雨峰 on 2018/1/15.
  */
 
-class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.Renderer {
+class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : GLSurfaceView.Renderer {
     private val prog = TextureYuv()
     private var maxTexBitmap = TextBitmap()
     private var minTexBitmap = TextBitmap()
@@ -32,19 +31,17 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView
     private var maxBitmap: Bitmap? = null
     private var minBitmap: Bitmap? = null
     private var mTriangle: Triangle? = null
-    private var isTakePicture = false
-    private var fileName: String = ""
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         // 设置清屏颜色为黑色
         GLES20.glClearColor(0f, 0f, 0f, 0f)
         if (!prog.isProgramBuilt) {
-            prog.buildProgram(mTargetSurface.context)
-            maxTexBitmap.buildProgram(mTargetSurface.context)
-            minTexBitmap.buildProgram(mTargetSurface.context)
+            prog.buildProgram()
+            maxTexBitmap.buildProgram()
+            minTexBitmap.buildProgram()
             //初始化三角形
-            mTriangle = Triangle(mTargetSurface.context)
+            mTriangle = Triangle()
             Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }
@@ -54,20 +51,13 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView
         GLES20.glViewport(0, 0, width, height)
     }
 
-    fun takePicture(fileName: String) {
-        if (!isTakePicture) {
-            this.fileName = fileName
-            isTakePicture = true
-        }
-    }
-
     override fun onDrawFrame(gl: GL10) {
         synchronized(this) {
-            if (isTakePicture) {
-                val bmp = createBitmapFromGLSurface(0, 0, mTargetSurface.width, mTargetSurface.height, gl)
-                saveBitmap(mTargetSurface.context, fileName, bmp!!)
-                isTakePicture = false
-            }
+//                        if (isTakePicture) {
+//                val bmp = createBitmapFromGLSurface(0, 0, mTargetSurface.width, mTargetSurface.height, gl)
+//                saveBitmap(mTargetSurface.context, fileName, bmp!!)
+//                isTakePicture = false
+//            }
             if (y != null) {
                 // reset position, have to be done
                 y!!.position(0)
@@ -115,7 +105,7 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView
     /**
      * this method will be called from native code, it's used for passing yuv data to me.
      */
-    fun update(ydata: ByteArray, udata: ByteArray, vdata: ByteArray, ir_ImageData: IR_ImageData) {
+    fun update(ydata: ByteArray, udata: ByteArray, vdata: ByteArray,ir_ImageData: IR_ImageData) {
         synchronized(this) {
             y!!.clear()
             u!!.clear()
@@ -123,32 +113,22 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView
             y!!.put(ydata, 0, ydata.size)
             u!!.put(udata, 0, udata.size)
             v!!.put(vdata, 0, vdata.size)
-
-//            mTriangle?.updateVertex(ir_ImageData)
-//            maxBitmap = initFontBitmap(ir_ImageData.max_temp.toString(), true)
-//            minBitmap = initFontBitmap(ir_ImageData.min_temp.toString())
-//            if (null != maxBitmap && !maxBitmap!!.isRecycled) {
-//                maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
-//            }
-//            if (null != minBitmap && !minBitmap!!.isRecycled) {
-//                minTexBitmap.updateVertex(ir_ImageData, ir_ImageData.min_x, ir_ImageData.min_y)
-//            }
+            update(ir_ImageData)
         }
 
-        mTargetSurface.requestRender()
+        mTargetSurface?.requestRender()
     }
 
-    fun update(ir_ImageData: IR_ImageData){
+    private fun update(ir_ImageData: IR_ImageData) {
         mTriangle?.updateVertex(ir_ImageData)
-        maxBitmap = initFontBitmap(ir_ImageData.max_temp.toString(), true)
-        minBitmap = initFontBitmap(ir_ImageData.min_temp.toString())
+        maxBitmap = initFontBitmap(ir_ImageData.max_temp, true)
+        minBitmap = initFontBitmap(ir_ImageData.min_temp)
         if (null != maxBitmap && !maxBitmap!!.isRecycled) {
             maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
         }
         if (null != minBitmap && !minBitmap!!.isRecycled) {
             minTexBitmap.updateVertex(ir_ImageData, ir_ImageData.min_x, ir_ImageData.min_y)
         }
-        mTargetSurface.requestRender()
     }
 
 }

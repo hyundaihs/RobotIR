@@ -11,7 +11,6 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
-import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
@@ -22,7 +21,6 @@ import com.hzncc.kevin.robot_ir.jni.CameraUtil
 import com.hzncc.kevin.robot_ir.jni.Device_w324_h256
 import com.hzncc.kevin.robot_ir.jni.HcvisionUtil
 import com.hzncc.kevin.robot_ir.jni.LeptonStatus
-import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer
 import com.hzncc.kevin.robot_ir.utils.*
@@ -32,7 +30,6 @@ import kotlinx.android.synthetic.main.per_gallery_list_item.view.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import java.io.File
-import java.nio.IntBuffer
 import java.nio.ShortBuffer
 
 
@@ -40,25 +37,33 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View) {
         handle = true
         when (v.id) {
-            R.id.open -> openCamera()
+            R.id.openIR -> openIR()
+            R.id.openVL -> openCamera()
             R.id.openWarn -> openWarn()
             R.id.max -> showPickers(true)
             R.id.min -> showPickers()
         }
     }
 
-    private fun openCamera() {
-        if (!cameraUtil.isOpened || HcvisionUtil.m_iLogID < 0) {
-            doAsync {
-                cameraUtil.open("192.168.3.231", 50001)
-                cameraUtil.start()
+    private fun openIR() {
+        if (openIR.text == "开启红外") {
+            cameraUtil.open("192.168.3.231", 50001)
+            cameraUtil.start()
+            openIR.text = "关闭红外"
+        } else {
+            cameraUtil.stop()
+            openIR.text = "开启红外"
+        }
+    }
 
+    private fun openCamera() {
+        if (openVL.text == "开启可见光") {
+            doAsync {
                 if (hcvisionUtil.init()) {
                     E("init success")
                 } else {
                     E("init failed")
                 }
-
                 if (hcvisionUtil.login()) {
                     E("login success")
                 } else {
@@ -70,17 +75,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 } else {
                     E("startPreview failed")
                 }
-                uiThread {
-                    open.text = "关闭监控"
-                }
             }
+            openVL.text = "关闭可见光"
         } else {
-            doAsync {
-                cameraUtil.close()
+            openVL.text = "开启可见光"
+            if (HcvisionUtil.m_iLogID > 0) {
                 hcvisionUtil.stopPreview()
-                uiThread {
-                    open.text = "开启监控"
-                }
             }
         }
     }
@@ -96,28 +96,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private var maxWarn by Preference("max_warn", 0)
     private var minWarn by Preference("min_warn", 0)
+    private var correctTemp: Float by Preference("correct_temp", 0.0f)
 
     override fun onPause() {
         super.onPause()
-//        if (null != cameraUtil && cameraUtil!!.isOpened) {
-//            surfaceViewL.onPause()
-//        }
-//        if (hcRenderSet) {
-//            surfaceViewR.onPause()
-//        }
         unregisterReceiver(broadcastReceiver)
     }
 
     override fun onResume() {
         super.onResume()
-//        if (null != cameraUtil && cameraUtil!!.isOpened) {
-//            surfaceViewL.onResume()
-//        }
-//        if (hcRenderSet) {
-//            surfaceViewR.onResume()
-//        }
         val intentFilter = IntentFilter(actionSaveBitmap)
         registerReceiver(broadcastReceiver, intentFilter)
+        adapter.notifyDataSetChanged()
     }
 
     override fun onDestroy() {
@@ -129,18 +119,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         super.onDestroy()
     }
 
-    var saveName = ""
 
     inner class MyBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == actionSaveBitmap) {
-                val fileName = intent.getStringExtra("fileName")
-                if (saveName == fileName) {
-                    App.instance.mData.add(0, Log_Data(fileName, fileName))
-                    adapter.notifyItemChanged(0)
-                } else {
-                    saveName = fileName
-                }
+                adapter.notifyItemChanged(0)
             }
         }
     }
@@ -210,6 +193,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         adapter.notifyDataSetChanged()
         max.text = "高温报警:$maxWarn℃"
         min.text = "低温报警:$minWarn℃"
+        correct.text = "温度补偿:$correctTemp℃"
+        correct.setOnClickListener {
+            showCorrectTmpPickers()
+        }
     }
 
     private fun countTimeGone() {
@@ -221,6 +208,17 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
         }
+    }
+
+    private fun showCorrectTmpPickers() {
+        val rel = IntArray(3)
+        if (correctTemp > 0) {
+            getCorrentIndex(correctTemp, rel)
+        }
+        showTempPicker(rel[0], rel[1], rel[2], { option1, option2, option3 ->
+            correctTemp = getCorrectTemp(option1, option2, option3)
+            correct.text = "温度补偿:$correctTemp℃"
+        })
     }
 
     private fun showPickers(isMax: Boolean = false) = if (isMax) {
@@ -292,58 +290,35 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    fun initDraw(surfaceView: SurfaceView) {
-        viewWidth = surfaceView.getWidth()
-        viewHeight = surfaceView.getHeight()
-        isRun = true
-        bitPaint.setAntiAlias(true)
-        bitPaint.setFilterBitmap(true)
-
-        blackPaint.setTextAlign(Paint.Align.CENTER)
-        whitePaint.setTextAlign(Paint.Align.CENTER)
-
-        blackPaint.setStrokeWidth(4f)
-        blackPaint.setStyle(Paint.Style.STROKE)
-        blackPaint.setFakeBoldText(true)
-        blackPaint.setColor(Color.BLACK)
-
-        whitePaint.setStyle(Paint.Style.FILL)
-        whitePaint.setStrokeWidth(2f)
-        whitePaint.setColor(Color.WHITE)
-
-        val size = DisplayUtil.sp2px(this, 16)
-        blackPaint.setTextSize(size.toFloat())
-        whitePaint.setTextSize(size.toFloat())
-
-        crossSize = DisplayUtil.sp2px(this, 5)
-        offSize = DisplayUtil.sp2px(this, 5)
-        measureRate()
-    }
-
-    fun measureRate() {
-        rateW = viewWidth.toFloat() / cameraUtil.getDeviceInfo()?.width!!
-        rateH = viewHeight.toFloat() / cameraUtil.getDeviceInfo()?.height!!
-    }
-
+    var startTime: Long = 0
+    var currTime: Long = 0
 
     fun openThread() {
         doAsync {
             synchronized(surfaceViewL) {
-                initDraw(surfaceViewL)
                 while (isRun) {
                     if (cameraUtil.getStatus() == LeptonStatus.STATUS_RUNNING) {
-                        App.instance.ir_imageData = getNext()
-                        irRender.update(App.instance.ir_imageData)
-                        hcRender.update(App.instance.ir_imageData)
+                        if (startTime == 0L) {
+                            startTime = System.currentTimeMillis()
+                        } else {
+                            currTime = System.currentTimeMillis()
+                            val off = currTime - startTime
+                            if (off >= 600000) {
+                                startTime = currTime
+                                cameraUtil.correct()
+                                D("校正")
+                            }
+                        }
+                        App.ir_imageData = getNext()
+                        irRender.update(App.ir_imageData)
                         if (isWarn) {
-                            if (App.instance.ir_imageData.max_temp >= maxWarn || App.instance.ir_imageData.min_temp <= minWarn) {
+                            if (App.ir_imageData.max_temp >= maxWarn || App.ir_imageData.min_temp <= minWarn) {
                                 if (!warning) {
                                     warning = true
-                                    Thread.sleep(80)
                                     val calendarUtil = CalendarUtil()
                                     val fileName = "${calendarUtil.format(CalendarUtil.FILENAME)}.jpeg"
-                                    irRender.takePicture(fileName)
-                                    hcRender.takePicture(fileName)
+                                    getIRPic(surfaceViewL.width, surfaceViewL.height, fileName, App.ir_imageData)
+                                    getVLPic(surfaceViewR.width, surfaceViewR.height, fileName, App.ir_imageData)
                                 }
                             } else {
                                 warning = false
@@ -355,31 +330,48 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun getNext(): IR_ImageData {
+    fun getIRPic(width: Int, height: Int, fileName: String, ir_imageData: IR_ImageData) {
+        doAsync {
+            val mBackEnv = GLES20BackEnv_IR(width, height)
+            mBackEnv.setRenderer(GLRGBRenderer())
+            mBackEnv.setInput(ir_imageData)
+            saveBitmap(fileName, mBackEnv.getBitmap(), true)
+        }
+    }
+
+    fun getVLPic(width: Int, height: Int, fileName: String, ir_imageData: IR_ImageData) {
+        doAsync {
+            val mBackEnv = GLES20BackEnv_VL(width, height)
+            mBackEnv.setRenderer(GLFrameRenderer())
+            mBackEnv.setInput(App.yData, App.uData, App.vData, HcvisionUtil.width, HcvisionUtil.height, ir_imageData)
+            saveBitmap(fileName, mBackEnv.getBitmap())
+        }
+    }
+
+    private fun getNext(is8byte: Boolean = false): IR_ImageData {
         val ir_ImageData = IR_ImageData()
         val raw = ShortArray(cameraUtil.deviceInfo.raw_length)
         cameraUtil.nextFrame(raw)
-
-//        val bmp = ByteArray(cameraUtil.deviceInfo?.bmp_length!!)
-        val bmp = ShortArray(cameraUtil.deviceInfo.bmp_length)
-        cameraUtil.img_14To565(raw, bmp)
-        //        createFileWithByte(bmp)
-        val bitmap = Bitmap.createBitmap(kotlin.IntArray(cameraUtil.deviceInfo.bmp_length), cameraUtil.getDeviceInfo().width,
-                cameraUtil.getDeviceInfo().height, Bitmap.Config.RGB_565)
-        val options = BitmapFactory.Options()
-        options.inJustDecodeBounds = false
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888
-//        val bitmap = BitmapFactory.decodeByteArray(bmp, 0, bmp.size, options)
-        ir_ImageData.buffer = ShortBuffer.wrap(bmp)
-        ir_ImageData.bitmap = bitmap
-        ir_ImageData.width = bitmap.width
-        ir_ImageData.height = bitmap.height
+        if (is8byte) {
+            val bmp = ByteArray(cameraUtil.deviceInfo.bmp_length)
+            cameraUtil.img_14To8(raw, bmp)
+            val options = BitmapFactory.Options()
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888
+            val bitmap = BitmapFactory.decodeByteArray(bmp, 0, bmp.size, options)
+            ir_ImageData.bitmap = bitmap
+        } else {
+            val bmp = ShortArray(cameraUtil.deviceInfo.raw_length)
+            cameraUtil.img_14To565(raw, bmp)
+            ir_ImageData.buffer = ShortBuffer.wrap(bmp)
+        }
+        ir_ImageData.width = cameraUtil.deviceInfo.width
+        ir_ImageData.height = cameraUtil.deviceInfo.height
         ir_ImageData.max_x = cameraUtil.maxX
         ir_ImageData.max_y = cameraUtil.maxY
         ir_ImageData.min_x = cameraUtil.minX
         ir_ImageData.min_y = cameraUtil.minY
-        ir_ImageData.max_temp = cameraUtil.maxTemp
-        ir_ImageData.min_temp = cameraUtil.minTemp
+        ir_ImageData.max_temp = cameraUtil.maxTemp + correctTemp
+        ir_ImageData.min_temp = cameraUtil.minTemp + correctTemp
         return ir_ImageData
     }
 

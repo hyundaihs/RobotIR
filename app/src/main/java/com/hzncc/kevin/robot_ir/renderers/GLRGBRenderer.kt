@@ -5,14 +5,12 @@ import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.util.Log
 import com.hzncc.kevin.robot_ir.createBitmapFromGLSurface
-import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
+import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.saveBitmap
 import com.hzncc.kevin.robot_ir.textures.TextBitmap
 import com.hzncc.kevin.robot_ir.textures.TextureRGB
 import com.hzncc.kevin.robot_ir.textures.Triangle
-import java.nio.ByteBuffer
-import java.nio.IntBuffer
 import java.nio.ShortBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -21,7 +19,7 @@ import javax.microedition.khronos.opengles.GL10
  * Robot
  * Created by 蔡雨峰 on 2018/1/17.
  */
-class GLRGBRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.Renderer {
+class GLRGBRenderer(private val mTargetSurface: GLSurfaceView? = null) : GLSurfaceView.Renderer {
     private val prog = TextureRGB()
     private var maxTexBitmap = TextBitmap()
     private var minTexBitmap = TextBitmap()
@@ -29,7 +27,6 @@ class GLRGBRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.R
     private var maxBitmap: Bitmap? = null
     private var minBitmap: Bitmap? = null
     private var mTriangle: Triangle? = null
-    private var isTakePicture = false
     private var mVideoWidth = -1
     private var mVideoHeight = -1
     private var fileName: String = ""
@@ -37,11 +34,11 @@ class GLRGBRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.R
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         if (!prog.isProgramBuilt) {
-            prog.buildProgram(mTargetSurface.context)
-            maxTexBitmap.buildProgram(mTargetSurface.context)
-            minTexBitmap.buildProgram(mTargetSurface.context)
+            prog.buildProgram()
+            maxTexBitmap.buildProgram()
+            minTexBitmap.buildProgram()
             //初始化三角形
-            mTriangle = Triangle(mTargetSurface.context)
+            mTriangle = Triangle()
             Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }
@@ -51,20 +48,8 @@ class GLRGBRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.R
         GLES20.glViewport(0, 0, width, height)
     }
 
-    fun takePicture(fileName: String) {
-        if (!isTakePicture) {
-            this.fileName = fileName
-            isTakePicture = true
-        }
-    }
-
     override fun onDrawFrame(gl: GL10) {
         synchronized(this) {
-            if (isTakePicture) {
-                val bmp = createBitmapFromGLSurface(0, 0, mTargetSurface.width, mTargetSurface.height, gl)
-                saveBitmap(mTargetSurface.context, fileName, bmp!!, true)
-                isTakePicture = false
-            }
             if (null != buffer) {
                 buffer?.position(0)
                 prog.buildTextures(buffer!!, mVideoWidth, mVideoHeight)
@@ -101,8 +86,8 @@ class GLRGBRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.R
             mVideoWidth = iR_ImageData.width
             mVideoHeight = iR_ImageData.height
             mTriangle?.updateVertex(iR_ImageData)
-            maxBitmap = initFontBitmap(iR_ImageData.max_temp.toString(), true)
-            minBitmap = initFontBitmap(iR_ImageData.min_temp.toString())
+            maxBitmap = initFontBitmap(iR_ImageData.max_temp, true)
+            minBitmap = initFontBitmap(iR_ImageData.min_temp)
             if (null != maxBitmap && !maxBitmap!!.isRecycled) {
                 maxTexBitmap.updateVertex(iR_ImageData, iR_ImageData.max_x, iR_ImageData.max_y)
             }
@@ -110,7 +95,7 @@ class GLRGBRenderer(private val mTargetSurface: GLSurfaceView) : GLSurfaceView.R
                 minTexBitmap.updateVertex(iR_ImageData, iR_ImageData.min_x, iR_ImageData.min_y)
             }
         }
-        mTargetSurface.requestRender()
+        mTargetSurface?.requestRender()
     }
 
 }

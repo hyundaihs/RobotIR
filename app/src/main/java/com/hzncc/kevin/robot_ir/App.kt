@@ -1,8 +1,9 @@
 package com.hzncc.kevin.robot_ir
 
 import android.Manifest
+import android.app.ActivityManager
 import android.app.Application
-
+import android.content.Context
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.data.Log_Data
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
@@ -10,13 +11,13 @@ import com.yanzhenjie.permission.AndPermission
 import com.yanzhenjie.permission.PermissionListener
 import org.jetbrains.anko.toast
 
+
 /**
  * Robot
  * Created by 蔡雨峰 on 2018/1/17.
  */
 
 class App : Application() {
-    lateinit var ir_imageData: IR_ImageData
     val mData = ArrayList<Log_Data>()
 
     override fun onCreate() {
@@ -25,6 +26,32 @@ class App : Application() {
         ir_imageData = IR_ImageData()
         SDCardUtil.initAll()
         checkPermission()
+
+    }
+
+    /**
+     * 程序是否在前台运行
+     *
+     */
+    fun isAppOnForeground(): Boolean {
+        val activityManager = applicationContext
+                .getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val packageName = applicationContext.packageName
+        /**
+         * 获取Android设备中所有正在运行的App
+         */
+        /**
+         * 获取Android设备中所有正在运行的App
+         */
+        val appProcesses = activityManager
+                .runningAppProcesses ?: return false
+        for (appProcess in appProcesses) {
+            // The name of the process that this object is associated with.
+            if (appProcess.processName == packageName && appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                return true
+            }
+        }
+        return false
     }
 
     private fun checkPermission() {
@@ -47,6 +74,9 @@ class App : Application() {
     companion object {
         // 伴生对象
         lateinit var instance: App
-            private set
+        lateinit var ir_imageData: IR_ImageData
+        lateinit var yData: ByteArray
+        lateinit var uData: ByteArray
+        lateinit var vData: ByteArray
     }
 }

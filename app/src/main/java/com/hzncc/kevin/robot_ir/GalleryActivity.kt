@@ -1,6 +1,9 @@
 package com.hzncc.kevin.robot_ir
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.support.v4.view.PagerAdapter
 import android.support.v7.app.AppCompatActivity
@@ -21,12 +24,36 @@ import java.util.*
  */
 class GalleryActivity : AppCompatActivity() {
 
-    private val views = ArrayList<View>(3)
+    //    private val views = ArrayList<View>(3)
+    val broadcastReceiver: MyBroadcastReceiver = MyBroadcastReceiver()
+    var index: Int = 0
+
+    inner class MyBroadcastReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == actionSaveBitmap) {
+                viewPager.adapter = MyAdapter(context, App.instance.mData)
+                viewPager.setCurrentItem(index)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(broadcastReceiver)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val intentFilter = IntentFilter(actionSaveBitmap)
+        registerReceiver(broadcastReceiver, intentFilter)
+        viewPager.adapter.notifyDataSetChanged()
+        viewPager.setCurrentItem(index)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gallery)
-        val index = intent.getIntExtra("index", 0)
+        index = intent.getIntExtra("index", 0)
         viewPager.adapter = MyAdapter(this, App.instance.mData)
         viewPager.setCurrentItem(index)
     }

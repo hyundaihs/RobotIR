@@ -45,12 +45,26 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <Button
-                android:id="@+id/open"
+                android:id="@+id/openIR"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
                 android:onClick="onClick"
-                android:text="开启监控"
+                android:text="开启红外"
+                android:textColor="@android:color/white" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/white" />
+
+            <Button
+                android:id="@+id/openVL"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:onClick="onClick"
+                android:text="开启可见光"
                 android:textColor="@android:color/white" />
 
             <View
@@ -94,6 +108,21 @@
                 android:onClick="onClick"
                 android:text="低温"
                 android:textColor="@android:color/white" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/white" />
+
+            <Button
+                android:id="@+id/correct"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:onClick="onClick"
+                android:text="温补"
+                android:textColor="@android:color/white" />
+
 
         </LinearLayout>
 

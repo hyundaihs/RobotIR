@@ -55,7 +55,9 @@ public class CameraUtil {
         if (null == deviceInfo) {
             return -1;
         }
-        handle = CameraSDK.open(ip, port, deviceInfo.typeId);
+        if (handle < 0) {
+            handle = CameraSDK.open(ip, port, deviceInfo.typeId);
+        }
         return 0;
     }
 

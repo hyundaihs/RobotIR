@@ -1,7 +1,7 @@
 package com.hzncc.kevin.robot_ir.textures
 
-import android.content.Context
 import android.opengl.GLES20
+import com.hzncc.kevin.robot_ir.App
 import com.hzncc.kevin.robot_ir.R
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.getFloatBuffer
@@ -14,7 +14,7 @@ import java.nio.FloatBuffer
  * Created by 蔡雨峰 on 2018/1/16.
  */
 
-class Triangle(val context: Context) {
+class Triangle() {
 
     private val vertexCount = maxCoords.size / COORDS_PER_VERTEX
     private val vertexStride = COORDS_PER_VERTEX * 4 // 4 bytes per vertex
@@ -31,8 +31,8 @@ class Triangle(val context: Context) {
         // 初始化顶点字节缓冲区，用于存放形状的坐标
         maxBuffer = getFloatBuffer(maxCoords)
         mixBuffer = getFloatBuffer(mixCoords)
-        val vertex_shader = TextResourceReader.readTextFileFromResource(context, R.raw.vertex_shader_shape)
-        val fragment_shader = TextResourceReader.readTextFileFromResource(context, R.raw.fragment_shader_shape)
+        val vertex_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.vertex_shader_shape)
+        val fragment_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.fragment_shader_shape)
         // 编译shader代码
         val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER,
                 vertex_shader)

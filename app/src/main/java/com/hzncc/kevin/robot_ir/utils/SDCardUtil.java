@@ -29,6 +29,8 @@ public class SDCardUtil {
             Log.d("AppPath", "ROOT init failed");
         }
         FileUtil.initPath(SDCardUtil.IMAGE);
+        FileUtil.initPath(SDCardUtil.IMAGE_IR);
+        FileUtil.initPath(SDCardUtil.IMAGE_VL);
         FileUtil.initPath(SDCardUtil.VIDEO);
         FileUtil.initPath(SDCardUtil.LOG);
         return true;

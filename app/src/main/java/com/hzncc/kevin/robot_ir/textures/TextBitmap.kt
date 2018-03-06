@@ -1,13 +1,13 @@
 package com.hzncc.kevin.robot_ir.textures
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLUtils
 import android.util.Log
+import com.hzncc.kevin.robot_ir.App
 import com.hzncc.kevin.robot_ir.R
-import com.hzncc.kevin.robot_ir.getByteBuffer
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
+import com.hzncc.kevin.robot_ir.getByteBuffer
 import com.hzncc.kevin.robot_ir.loadShader
 import com.hzncc.kevin.robot_ir.utils.TextResourceReader
 import java.nio.ByteBuffer
@@ -26,12 +26,12 @@ class TextBitmap {
     private var _vertex_buffer: ByteBuffer? = null
     private var _coord_buffer: ByteBuffer? = null
 
-    fun buildProgram(context: Context) {
+    fun buildProgram() {
         _vertex_buffer = getByteBuffer(squareVertices)
         _coord_buffer = getByteBuffer(coordVertices)
         if (_program <= 0) {
-            val vertex_shader = TextResourceReader.readTextFileFromResource(context, R.raw.vertex_shader_rgb)
-            val fragment_shader = TextResourceReader.readTextFileFromResource(context, R.raw.fragment_shader_rgb)
+            val vertex_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.vertex_shader_rgb)
+            val fragment_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.fragment_shader_rgb)
             _program = createProgram(vertex_shader, fragment_shader)
         }
         getHandles()
