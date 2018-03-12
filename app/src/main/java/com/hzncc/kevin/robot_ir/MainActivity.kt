@@ -24,7 +24,6 @@ import com.hzncc.kevin.robot_ir.jni.LeptonStatus
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer
 import com.hzncc.kevin.robot_ir.utils.*
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.per_gallery_list_item.view.*
 import org.jetbrains.anko.doAsync
@@ -422,17 +421,17 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val logData = mData[position]
-//            val options = BitmapFactory.Options().apply {
-//                inSampleSize = 2
-//            }
-//            holder.itemView.irImage.setImageBitmap(
-//                    BitmapFactory.decodeFile(SDCardUtil.IMAGE_IR + logData.irImage, options))
-//            holder.itemView.vlImage.setImageBitmap(
-//                    BitmapFactory.decodeFile(SDCardUtil.IMAGE_VL + logData.vlImage, options))
-            Picasso.with(context).load(File(SDCardUtil.IMAGE_IR + logData.irImage))
-                    .into(holder.itemView.irImage)
-            Picasso.with(context).load(File(SDCardUtil.IMAGE_VL + logData.vlImage))
-                    .into(holder.itemView.vlImage)
+            val options = BitmapFactory.Options().apply {
+                inSampleSize = 4
+            }
+            holder.itemView.irImage.setImageBitmap(
+                    BitmapFactory.decodeFile(SDCardUtil.IMAGE_IR + logData.irImage, options))
+            holder.itemView.vlImage.setImageBitmap(
+                    BitmapFactory.decodeFile(SDCardUtil.IMAGE_VL + logData.vlImage, options))
+//            Picasso.with(context).load(File(SDCardUtil.IMAGE_IR + logData.irImage))
+//                    .into(holder.itemView.irImage)
+//            Picasso.with(context).load(File(SDCardUtil.IMAGE_VL + logData.vlImage))
+//                    .into(holder.itemView.vlImage)
             holder.itemView.setOnClickListener {
                 onItemClick.invoke(holder.itemView, position)
             }
