@@ -5,6 +5,7 @@ import com.hikvision.netsdk.NET_DVR_DEVICEINFO_V30
 import com.hikvision.netsdk.RealPlayCallBack
 import com.hzncc.kevin.robot_ir.*
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
+import com.hzncc.kevin.robot_ir.utils.SDCardUtil
 import org.MediaPlayer.PlayM4.Player
 import org.MediaPlayer.PlayM4.PlayerCallBack
 
@@ -35,7 +36,7 @@ class HcvisionUtil {
             D("HCNetSDK init is failed!")
             return false
         }
-        HCNetSDK.getInstance().NET_DVR_SetLogToFile(3, "/mnt/sdcard/sdklog/",
+        HCNetSDK.getInstance().NET_DVR_SetLogToFile(3, SDCardUtil.LOG_HCVISION,
                 true)
 
         return true

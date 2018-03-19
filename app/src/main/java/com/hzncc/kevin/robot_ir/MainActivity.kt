@@ -21,6 +21,7 @@ import com.hzncc.kevin.robot_ir.jni.CameraUtil
 import com.hzncc.kevin.robot_ir.jni.Device_w324_h256
 import com.hzncc.kevin.robot_ir.jni.HcvisionUtil
 import com.hzncc.kevin.robot_ir.jni.LeptonStatus
+import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer
 import com.hzncc.kevin.robot_ir.utils.*
@@ -30,6 +31,7 @@ import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import java.io.File
 import java.nio.ShortBuffer
+import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
@@ -84,6 +86,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    override fun onBackPressed() {
+        super.onBackPressed()
+        System.exit(0)
+    }
+
     private fun openWarn() {
         isWarn = !isWarn
         if (isWarn) {
@@ -132,8 +139,13 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         setContentView(R.layout.activity_main)
         surfaceViewL.setEGLContextClientVersion(2)
         surfaceViewR.setEGLContextClientVersion(2)
-        irRender = GLRGBRenderer(surfaceViewL)
-        surfaceViewL.setRenderer(irRender)
+        if (isBitmapDraw) {
+            bitIrRender = GLBitmapRenderer(surfaceViewL)
+            surfaceViewL.setRenderer(bitIrRender)
+        } else {
+            irRender = GLRGBRenderer(surfaceViewL)
+            surfaceViewL.setRenderer(irRender)
+        }
         surfaceViewL.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY)
         hcRender = GLFrameRenderer(surfaceViewR)
         surfaceViewR.setRenderer(hcRender)
@@ -252,10 +264,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var hcRender: GLFrameRenderer
     private lateinit var irRender: GLRGBRenderer
+    private lateinit var bitIrRender: GLBitmapRenderer
     private lateinit var adapter: MyAdapter
     val broadcastReceiver: MyBroadcastReceiver = MyBroadcastReceiver()
     lateinit var hcvisionUtil: HcvisionUtil
     lateinit var cameraUtil: CameraUtil
+    private val isBitmapDraw = true
     val fromR by lazy {
         AnimationUtils.loadAnimation(this, R.anim.slide_from_right)
     }
@@ -308,8 +322,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                                 D("校正")
                             }
                         }
-                        App.ir_imageData = getNext()
-                        irRender.update(App.ir_imageData)
+                        App.ir_imageData = getNext(isBitmapDraw)
+                        if (isBitmapDraw) {
+                            bitIrRender.update(App.ir_imageData)
+                        } else {
+                            irRender.update(App.ir_imageData)
+                        }
                         if (isWarn) {
                             if (App.ir_imageData.max_temp >= maxWarn || App.ir_imageData.min_temp <= minWarn) {
                                 if (!warning) {
@@ -332,7 +350,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     fun getIRPic(width: Int, height: Int, fileName: String, ir_imageData: IR_ImageData) {
         doAsync {
             val mBackEnv = GLES20BackEnv_IR(width, height)
-            mBackEnv.setRenderer(GLRGBRenderer())
+            if(isBitmapDraw){
+                mBackEnv.setRenderer(GLBitmapRenderer())
+            }else{
+                mBackEnv.setRenderer(GLRGBRenderer())
+            }
             mBackEnv.setInput(ir_imageData)
             saveBitmap(fileName, mBackEnv.getBitmap(), true)
         }

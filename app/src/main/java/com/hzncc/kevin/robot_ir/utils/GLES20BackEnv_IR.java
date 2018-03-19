@@ -2,11 +2,13 @@ package com.hzncc.kevin.robot_ir.utils;
 
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
+import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.util.Log;
 
 import com.hzncc.kevin.robot_ir.data.IR_ImageData;
 import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer;
+import com.hzncc.kevin.robot_ir.renderers.MyGlRenderer;
 
 import java.nio.IntBuffer;
 
@@ -23,7 +25,7 @@ public class GLES20BackEnv_IR {
     private int mWidth;
     private int mHeight;
     private EGLHelper mEGLHelper;
-    private GLRGBRenderer renderer;
+    private MyGlRenderer renderer;
 
     public GLES20BackEnv_IR(int width, int height) {
         this.mWidth = width;
@@ -36,7 +38,7 @@ public class GLES20BackEnv_IR {
 //        this.mThreadOwner = threadOwner;
     }
 
-    public void setRenderer(GLRGBRenderer renderer) {
+    public void setRenderer(MyGlRenderer renderer) {
         this.renderer = renderer;
 
         // Does this thread own the OpenGL context?

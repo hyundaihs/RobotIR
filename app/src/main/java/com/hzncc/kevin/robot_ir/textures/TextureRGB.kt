@@ -14,7 +14,7 @@ import java.nio.ShortBuffer
  * Robot
  * Created by 蔡雨峰 on 2018/1/16.
  */
-class TextureRGB {
+class TextureRGB(val isFanZ: Boolean = true) {
     private var _program: Int = -1
     private var _tid: Int = -1
     private var attribPosition: Int = -1
@@ -26,7 +26,11 @@ class TextureRGB {
 
     fun buildProgram() {
         _vertex_buffer = getByteBuffer(squareVertices)
-        _coord_buffer = getByteBuffer(coordVertices)
+        if (isFanZ) {
+            _coord_buffer = getByteBuffer(coordVertices_fz)
+        } else {
+            _coord_buffer = getByteBuffer(coordVertices)
+        }
         if (_program <= 0) {
             val vertex_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.vertex_shader_rgb)
             val fragment_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.fragment_shader_rgb)
@@ -117,8 +121,8 @@ class TextureRGB {
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB, width, height, 0,
                 GLES20.GL_RGB, GLES20.GL_UNSIGNED_SHORT_5_6_5, buffer)
         checkGlError("glTexImage2D")
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST.toFloat())
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
     }
@@ -167,5 +171,7 @@ class TextureRGB {
         private val squareVertices = floatArrayOf(-1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f) // fullscreen
 
         private val coordVertices = floatArrayOf(0.0f, rBold, 1.0f, rBold, 0.0f, lBold, 1.0f, lBold)// whole-texture
+
+        private val coordVertices_fz = floatArrayOf(1.0f, lBold, 0.0f, lBold, 1.0f, rBold, 0.0f, rBold)// whole-texture
     }
 }

@@ -16,7 +16,7 @@ import java.nio.ByteBuffer
  * Robot
  * Created by 蔡雨峰 on 2018/1/16.
  */
-class TextBitmap {
+class TextBitmap(val isFanz:Boolean = true) {
     private var _program: Int = -1
     private var _tid: Int = -1
     private var attribPosition: Int = -1
@@ -118,11 +118,10 @@ class TextBitmap {
         checkGlError("glBindTexture")
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
         checkGlError("glTexImage2D")
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST.toFloat())
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
-        bitmap.recycle()
     }
 
     /**
@@ -157,9 +156,12 @@ class TextBitmap {
     fun updateVertex(ir_ImageData: IR_ImageData, x: Int, y: Int) {
         val ww: Float = ir_ImageData.width.toFloat() / 2
         val hh: Float = ir_ImageData.height.toFloat() / 2
-        val xx: Float = (x.toFloat() - ww) / ww
-        val xy: Float = (hh - y.toFloat()) / hh
-
+        var xx: Float = (x.toFloat() - ww) / ww
+        var xy: Float = (hh - y.toFloat()) / hh
+        if (isFanz) {
+            xx = -xx
+            xy = -xy
+        }
         squareVertices = createTriangleCoords(xx, xy, caleModel(xx, xy))
 
         // 初始化顶点字节缓冲区，用于存放形状的坐标

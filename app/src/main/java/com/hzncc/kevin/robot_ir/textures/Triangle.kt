@@ -14,20 +14,20 @@ import java.nio.FloatBuffer
  * Created by 蔡雨峰 on 2018/1/16.
  */
 
-class Triangle() {
+class Triangle(val isFanz:Boolean = true) {
 
     private val vertexCount = maxCoords.size / COORDS_PER_VERTEX
     private val vertexStride = COORDS_PER_VERTEX * 4 // 4 bytes per vertex
     // 设置三角形颜色和透明度（r,g,b,a）
     internal var blue = floatArrayOf(0.0f, 0.0f, 1f, 1.0f)//蓝色不透明
     internal var red = floatArrayOf(1.0f, 0.0f, 0f, 1.0f)//红色不透明
-    private var maxBuffer: FloatBuffer
-    private var mixBuffer: FloatBuffer
-    private val mProgram: Int
+    private var maxBuffer: FloatBuffer? = null
+    private var mixBuffer: FloatBuffer? = null
+    private var mProgram: Int = -1
     private var mPositionHandle: Int = 0
     private var mColorHandle: Int = 0
 
-    init {
+    fun buildProgram() {
         // 初始化顶点字节缓冲区，用于存放形状的坐标
         maxBuffer = getFloatBuffer(maxCoords)
         mixBuffer = getFloatBuffer(mixCoords)
@@ -55,10 +55,16 @@ class Triangle() {
     fun updateVertex(ir_ImageData: IR_ImageData) {
         val ww: Float = ir_ImageData.width.toFloat() / 2
         val hh: Float = ir_ImageData.height.toFloat() / 2
-        val maxx: Float = (ir_ImageData.max_x.toFloat() - ww) / ww
-        val maxy: Float = (hh - ir_ImageData.max_y.toFloat()) / hh
-        val minx: Float = (ir_ImageData.min_x.toFloat() - ww) / ww
-        val miny: Float = (hh - ir_ImageData.min_y.toFloat()) / hh
+        var maxx: Float = (ir_ImageData.max_x.toFloat() - ww) / ww
+        var maxy: Float = (hh - ir_ImageData.max_y.toFloat()) / hh
+        var minx: Float = (ir_ImageData.min_x.toFloat() - ww) / ww
+        var miny: Float = (hh - ir_ImageData.min_y.toFloat()) / hh
+        if (isFanz) {
+            maxx = -maxx
+            maxy = -maxy
+            minx = -minx
+            miny = -miny
+        }
 
         maxCoords = createTriangleCoords(maxx, maxy, caleModel(maxx, maxy))
         mixCoords = createTriangleCoords(minx, miny, caleModel(minx, miny))

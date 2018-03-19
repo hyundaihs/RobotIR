@@ -16,7 +16,7 @@ import java.nio.ByteBuffer
  * Robot
  * Created by 蔡雨峰 on 2018/1/16.
  */
-class TextureBitmap {
+class TextureBitmap(val isFanz: Boolean = true) {
     private var _program: Int = -1
     private var _tid: Int = -1
     private var attribPosition: Int = -1
@@ -28,7 +28,11 @@ class TextureBitmap {
 
     fun buildProgram() {
         _vertice_buffer = getByteBuffer(squareVertices)
-        _coord_buffer = getByteBuffer(coordVertices)
+        if (isFanz) {
+            _coord_buffer = getByteBuffer(coordVertices_fz)
+        } else {
+            _coord_buffer = getByteBuffer(coordVertices)
+        }
         if (_program <= 0) {
             val vertex_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.vertex_shader_rgb)
             val fragment_shader = TextResourceReader.readTextFileFromResource(App.instance.applicationContext, R.raw.fragment_shader_rgb)
@@ -122,7 +126,6 @@ class TextureBitmap {
         GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
-        bitmap.recycle()
     }
 
     /**
@@ -171,6 +174,8 @@ class TextureBitmap {
         private val squareVertices = floatArrayOf(-1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f) // fullscreen
 
         private val coordVertices = floatArrayOf(0.0f, rBold, 1.0f, rBold, 0.0f, lBold, 1.0f, lBold)// whole-texture
+
+        private val coordVertices_fz = floatArrayOf(1.0f, lBold, 0.0f, lBold, 1.0f, rBold, 0.0f, rBold)// whole-texture
 
     }
 }

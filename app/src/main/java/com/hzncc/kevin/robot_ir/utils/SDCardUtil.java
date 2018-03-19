@@ -15,6 +15,7 @@ public class SDCardUtil {
     public static final String IMAGE_VL = ROOT + "image/vl/";
     public static final String VIDEO = ROOT + "video/";
     public static final String LOG = ROOT + "log/";
+    public static final String LOG_HCVISION = LOG + "sdklog/";
 
 
     public static boolean initAll() {
@@ -33,6 +34,7 @@ public class SDCardUtil {
         FileUtil.initPath(SDCardUtil.IMAGE_VL);
         FileUtil.initPath(SDCardUtil.VIDEO);
         FileUtil.initPath(SDCardUtil.LOG);
+        FileUtil.initPath(SDCardUtil.LOG_HCVISION);
         return true;
     }
 
