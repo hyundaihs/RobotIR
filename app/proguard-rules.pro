@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+
+#AndPermission
+-dontwarn com.yanzhenjie.permission.**
+-dontwarn com.squareup.okhttp.**
+-dontwarn com.squareup.picasso.**
