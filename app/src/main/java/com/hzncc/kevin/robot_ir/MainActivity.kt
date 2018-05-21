@@ -29,10 +29,8 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.per_gallery_list_item.view.*
 import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
 import java.io.File
 import java.nio.ShortBuffer
-import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
@@ -50,6 +48,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private fun openIR() {
         if (openIR.text == "开启红外") {
             cameraUtil.open("192.168.3.231", 50001)
+//            cameraUtil.open("192.168.0.100", 50001)
             cameraUtil.start()
             openIR.text = "关闭红外"
         } else {
@@ -60,7 +59,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun openCamera() {
         if (openVL.text == "开启可见光") {
-            doAsync {
+            if (!hcvisionUtil.isLogined()) {
                 if (hcvisionUtil.init()) {
                     E("init success")
                 } else {
@@ -71,12 +70,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 } else {
                     E("login failed")
                 }
-
-                if (hcvisionUtil.startPreview(hcRender)) {
-                    E("startPreview success")
-                } else {
-                    E("startPreview failed")
-                }
+            }
+            if (hcvisionUtil.startPreview(hcRender)) {
+                E("startPreview success")
+            } else {
+                E("startPreview failed")
             }
             openVL.text = "关闭可见光"
         } else {
@@ -173,7 +171,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
 
             override fun onAnimationEnd(animation: Animation?) {
-                countTimeGone()
+//                countTimeGone()
             }
 
             override fun onAnimationStart(animation: Animation?) {
@@ -211,16 +209,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun countTimeGone() {
-        doAsync {
-            Thread.sleep(5000)
-            uiThread {
-                if (!handle) {
-                    right_buttons.startAnimation(toR)
-                }
-            }
-        }
-    }
+//    private fun countTimeGone() {
+//        doAsync {
+//            Thread.sleep(5000)
+//            uiThread {
+//                if (!handle) {
+//                    right_buttons.startAnimation(toR)
+//                }
+//            }
+//        }
+//    }
 
     private fun showCorrectTmpPickers() {
         val rel = IntArray(3)
@@ -351,9 +349,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     fun getIRPic(width: Int, height: Int, fileName: String, ir_imageData: IR_ImageData) {
         doAsync {
             val mBackEnv = GLES20BackEnv_IR(width, height)
-            if(isBitmapDraw){
+            if (isBitmapDraw) {
                 mBackEnv.setRenderer(GLBitmapRenderer())
-            }else{
+            } else {
                 mBackEnv.setRenderer(GLRGBRenderer())
             }
             mBackEnv.setInput(ir_imageData)

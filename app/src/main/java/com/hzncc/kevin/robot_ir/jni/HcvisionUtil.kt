@@ -25,6 +25,9 @@ class HcvisionUtil {
         val m_oPort = 8000
         val m_oUser = "admin"
         val m_oPsd = "admin123456"
+//        val m_oIPAddr = "192.168.0.169"
+//        val m_oUser = "admin"
+//        val m_oPsd = "a@123456"
 
         var width = 0
         var height = 0
@@ -40,6 +43,10 @@ class HcvisionUtil {
                 true)
 
         return true
+    }
+
+    fun isLogined(): Boolean {
+        return m_iLogID >= 0
     }
 
     fun login(): Boolean {
@@ -85,7 +92,9 @@ class HcvisionUtil {
     }
 
     fun loginOut(): Boolean {
-        return HCNetSDK.getInstance().NET_DVR_Logout_V30(m_iLogID)
+        val rel = HCNetSDK.getInstance().NET_DVR_Logout_V30(m_iLogID)
+        m_iLogID = -1
+        return rel
     }
 
     fun startPreview(hcRender: GLFrameRenderer): Boolean {
@@ -113,7 +122,6 @@ class HcvisionUtil {
         if (HCNetSDK.getInstance().NET_DVR_StopRealPlay(m_iPlayID)) {
             D("stop preview success")
         }
-        m_iLogID = -1
         m_iPlayID = -1
         m_iPort = -1
     }
@@ -135,13 +143,13 @@ class HcvisionUtil {
             I("getPort succ with: " + m_iPort)
             if (iDataSize > 0) {
                 if (!Player.getInstance().setStreamOpenMode(m_iPort,
-                        iStreamMode)) // set stream mode
+                                iStreamMode)) // set stream mode
                 {
                     D("setStreamOpenMode failed")
                     return
                 }
                 if (!Player.getInstance().openStream(m_iPort, pDataBuffer,
-                        iDataSize, 6 * 1024 * 1024)) // open stream
+                                iDataSize, 6 * 1024 * 1024)) // open stream
                 {
                     E("openStream failed")
                     return
@@ -152,20 +160,20 @@ class HcvisionUtil {
                     return
                 }
                 if (!Player.getInstance().setDecodeCB(m_iPort, PlayerCallBack.PlayerDecodeCB { //
-                    nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
-                    ->
-                    width = nWidth
-                    height = nHeight
-                    hcRender.update(nWidth,nHeight)
-                    App.yData = ByteArray(nWidth * nHeight)
-                    App.vData = ByteArray(App.yData.size / 4)
-                    App.uData = ByteArray(App.yData.size / 4)
-                    System.arraycopy(data, 0, App.yData, 0, App.yData.size)
-                    System.arraycopy(data, 0 + App.yData.size, App.vData, 0, App.vData.size)
-                    System.arraycopy(data, 0 + App.yData.size + App.vData.size, App.uData, 0, App.uData.size)
-                    hcRender.update(App.yData, App.uData, App.vData, App.ir_imageData)
-                    MainActivity.hcRenderSet = true
-                })) {
+                            nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
+                            ->
+                            width = nWidth
+                            height = nHeight
+                            hcRender.update(nWidth, nHeight)
+                            App.yData = ByteArray(nWidth * nHeight)
+                            App.vData = ByteArray(App.yData.size / 4)
+                            App.uData = ByteArray(App.yData.size / 4)
+                            System.arraycopy(data, 0, App.yData, 0, App.yData.size)
+                            System.arraycopy(data, 0 + App.yData.size, App.vData, 0, App.vData.size)
+                            System.arraycopy(data, 0 + App.yData.size + App.vData.size, App.uData, 0, App.uData.size)
+                            hcRender.update(App.yData, App.uData, App.vData, App.ir_imageData)
+                            MainActivity.hcRenderSet = true
+                        })) {
                     E("setDecodeCB failed")
                 } else {
                     E("setDecodeCB success")
