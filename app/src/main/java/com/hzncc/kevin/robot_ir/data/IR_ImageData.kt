@@ -15,4 +15,4 @@ data class IR_ImageData(var width: Int = 0, var height: Int = 0, var max_x: Int 
                         var max_temp: Float = -100f, var min_temp: Float = 1000f,
                         var max_gary: Short = 0, var min_gray: Short = 0)
 
-data class Log_Data(var irImage: String = "", var vlImage: String = "")
+data class Log_Data(var irImage: String = "", var vlImage: String = "", var time: Long = 0, var isMaxWarn: Boolean = false, var warnTemp: Float = 0f)

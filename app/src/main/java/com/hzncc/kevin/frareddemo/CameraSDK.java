@@ -228,6 +228,8 @@ public class CameraSDK {
      */
     public static native int getCurrentFrameNum(long handle);
 
+//    public static native void GetAffinePara1(double[] pIr, double[] pVis, double[] pPara);
+
     /**
      * 设置显示的Surface
      * @return 是否成功

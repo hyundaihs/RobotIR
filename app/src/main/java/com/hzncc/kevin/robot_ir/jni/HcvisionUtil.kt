@@ -8,6 +8,7 @@ import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
 import org.MediaPlayer.PlayM4.Player
 import org.MediaPlayer.PlayM4.PlayerCallBack
+import org.jetbrains.anko.doAsync
 
 
 /**
@@ -21,7 +22,8 @@ class HcvisionUtil {
         var m_iPort = -1
         var m_oNetDvrDeviceInfoV30: NET_DVR_DEVICEINFO_V30? = null
 
-        val m_oIPAddr = "192.168.3.64"
+        val m_oIPAddr = "192.168.3.10"
+//        val m_oIPAddr = "10.10.30.10"
         val m_oPort = 8000
         val m_oUser = "admin"
         val m_oPsd = "admin123456"
@@ -100,8 +102,13 @@ class HcvisionUtil {
     fun startPreview(hcRender: GLFrameRenderer): Boolean {
         val previewInfo = com.hikvision.netsdk.NET_DVR_PREVIEWINFO()
         previewInfo.lChannel = 1
-        previewInfo.dwStreamType = 1 // substream
-        previewInfo.bBlocked = 1
+        previewInfo.dwStreamType = 0 // 码流类型:0-主码流，1-子码流，2-码流 3，3-虚拟码流，以此类推
+        previewInfo.dwLinkMode = 1 //连接方式:0- TCP 方式，1- UDP 方式，2- 多播方式，3- RTP 方式，4-RTP/RTSP，5-RSTP/HTTP
+        previewInfo.bBlocked = 0 //0- 非阻塞取流，1- 阻塞取流
+        previewInfo.bPassbackRecord = 0 //0-不启用录像回传，1-启用录像回传。ANR 断网补录功能，客户端和设备之间网络异常恢复之后自动将前端数据同步过来，需要设备支持。
+        previewInfo.byPreviewMode = 0 //预览模式:0- 正常预览，1- 延迟预览
+        previewInfo.byProtoType = 0 //应用层取流协议:0- 私有协议，1- RTSP 协议
+
         m_iPlayID = HCNetSDK.getInstance().NET_DVR_RealPlay_V40(m_iLogID, previewInfo,
                 RealPlayCallBack { iRealHandle, iDataType, pDataBuffer, iDataSize ->
                     processRealData(1, iDataType, pDataBuffer, iDataSize, Player.STREAM_REALTIME, hcRender)
@@ -143,41 +150,44 @@ class HcvisionUtil {
             I("getPort succ with: " + m_iPort)
             if (iDataSize > 0) {
                 if (!Player.getInstance().setStreamOpenMode(m_iPort,
-                                iStreamMode)) // set stream mode
+                        iStreamMode)) // set stream mode
                 {
                     D("setStreamOpenMode failed")
                     return
                 }
-                if (!Player.getInstance().openStream(m_iPort, pDataBuffer,
-                                iDataSize, 6 * 1024 * 1024)) // open stream
-                {
-                    E("openStream failed")
-                    return
-                }
-
                 if (!Player.getInstance().setDecodeFrameType(m_iPort, 0)) {
                     E("setDecodeFrameType failed")
                     return
                 }
+                if (!Player.getInstance().openStream(m_iPort, pDataBuffer,
+                        iDataSize, 6 * 1024 * 1024)) // open stream
+                {
+                    E("openStream failed")
+                    return
+                }
                 if (!Player.getInstance().setDecodeCB(m_iPort, PlayerCallBack.PlayerDecodeCB { //
-                            nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
-                            ->
-                            width = nWidth
-                            height = nHeight
-                            hcRender.update(nWidth, nHeight)
-                            App.yData = ByteArray(nWidth * nHeight)
-                            App.vData = ByteArray(App.yData.size / 4)
-                            App.uData = ByteArray(App.yData.size / 4)
-                            System.arraycopy(data, 0, App.yData, 0, App.yData.size)
-                            System.arraycopy(data, 0 + App.yData.size, App.vData, 0, App.vData.size)
-                            System.arraycopy(data, 0 + App.yData.size + App.vData.size, App.uData, 0, App.uData.size)
-                            hcRender.update(App.yData, App.uData, App.vData, App.ir_imageData)
-                            MainActivity.hcRenderSet = true
-                        })) {
+                    nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
+                    ->
+                    width = nWidth
+                    height = nHeight
+//                    App.vlWidth = nWidth
+//                    App.vlHeight = nHeight
+                    hcRender.update(nWidth, nHeight)
+                    App.yData = ByteArray(nWidth * nHeight)
+                    App.vData = ByteArray(App.yData.size / 4)
+                    App.uData = ByteArray(App.yData.size / 4)
+                    System.arraycopy(data, 0, App.yData, 0, App.yData.size)
+                    System.arraycopy(data, 0 + App.yData.size, App.vData, 0, App.vData.size)
+                    System.arraycopy(data, 0 + App.yData.size + App.vData.size, App.uData, 0, App.uData.size)
+                    hcRender.update(App.yData, App.uData, App.vData, App.ir_imageData)
+                    MainActivity.hcRenderSet = true
+                })) {
                     E("setDecodeCB failed")
                 } else {
                     E("setDecodeCB success")
                 }
+
+
                 if (!Player.getInstance().play(m_iPort, null)) {
                     E("play failed")
                     return
@@ -185,32 +195,28 @@ class HcvisionUtil {
                 return
             }
         } else {
-//            D("dataType = $iDataType")
-            if (!Player.getInstance().inputData(m_iPort, pDataBuffer, iDataSize)) {
-                E("input data failed")
+            // Log.i(TAG, "处理流数据");
+            if (iDataSize > 0) {
+                var i = 0
+                while (i < 4000) {
+                    if (Player.getInstance().inputData(m_iPort, pDataBuffer, iDataSize)) {
+                        break
+                    }
+
+                    if (i % 100 == 0) {
+                        E("inputData failed with: " +
+                                Player.getInstance().getLastError(m_iPort) + ", i:" + i);
+                    }
+
+                    try {
+                        Thread.sleep(10)
+                    } catch (e: InterruptedException) {
+                        e.printStackTrace()
+
+                    }
+                    i++
+                }
             }
-//            if (!) {
-//                var i = 0
-//                while (i < 4000) {
-//                    if (Player.getInstance().inputData(m_iPort, pDataBuffer, iDataSize)) {
-//                        break
-//                    }
-//
-//                    if (i % 100 == 0) {
-//                        E("inputData failed with: " +
-//                                Player.getInstance().getLastError(m_iPort) + ", i:" + i);
-//                    }
-//
-//                    try {
-//                        Thread.sleep(10)
-//                    } catch (e: InterruptedException) {
-//                        e.printStackTrace()
-//
-//                    }
-//
-//                    i++
-//                }
-//            }
         }
     }
 

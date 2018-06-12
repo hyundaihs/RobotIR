@@ -6,6 +6,7 @@ import android.app.Application
 import android.content.Context
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.data.Log_Data
+import com.hzncc.kevin.robot_ir.utils.Preference
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
 import com.yanzhenjie.permission.AndPermission
 import com.yanzhenjie.permission.PermissionListener
@@ -78,5 +79,33 @@ class App : Application() {
         lateinit var yData: ByteArray
         lateinit var uData: ByteArray
         lateinit var vData: ByteArray
+
+        var isPeizhund: Boolean by Preference("isPeizhund", false)
+
+        var pointIR1_x: Float by Preference("pointIR1_x", 50.0f)
+        var pointIR1_y: Float by Preference("pointIR1_y", 50.0f)
+        var pointIR2_x: Float by Preference("pointIR2_x", 100.0f)
+        var pointIR2_y: Float by Preference("pointIR2_y", 100.0f)
+        var pointIR3_x: Float by Preference("pointIR3_x", 150.0f)
+        var pointIR3_y: Float by Preference("pointIR3_y", 150.0f)
+
+        var pointVL1_x: Float by Preference("pointVL1_x", 50.0f)
+        var pointVL1_y: Float by Preference("pointVL1_y", 50.0f)
+        var pointVL2_x: Float by Preference("pointVL2_x", 100.0f)
+        var pointVL2_y: Float by Preference("pointVL2_y", 100.0f)
+        var pointVL3_x: Float by Preference("pointVL3_x", 150.0f)
+        var pointVL3_y: Float by Preference("pointVL3_y", 150.0f)
+
+        var param1: Float by Preference("param1", 0.0f)
+        var param2: Float by Preference("param2", 0.0f)
+        var param3: Float by Preference("param3", 0.0f)
+        var param4: Float by Preference("param4", 0.0f)
+        var param5: Float by Preference("param5", 0.0f)
+        var param6: Float by Preference("param6", 0.0f)
+
+        var irWidth = 0
+        var irHeight = 0
+//        var vlWidth = 0
+//        var vlHeight = 0
     }
 }

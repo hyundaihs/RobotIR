@@ -4,11 +4,18 @@ import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.util.Log
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR1_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR1_y
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR2_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR2_y
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR3_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR3_y
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.textures.TextBitmap
 import com.hzncc.kevin.robot_ir.textures.TextureRGB
 import com.hzncc.kevin.robot_ir.textures.Triangle
+import com.hzncc.kevin.robot_ir.utils.Preference
 import java.nio.ShortBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -20,25 +27,35 @@ import javax.microedition.khronos.opengles.GL10
 class GLRGBRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlRenderer() {
     override fun update(`object`: Any?) {
         if (`object` is IR_ImageData) {
-            val iR_ImageData = `object`
+            val ir_ImageData = `object`
             synchronized(this) {
-                buffer = iR_ImageData.buffer
-                mVideoWidth = iR_ImageData.width
-                mVideoHeight = iR_ImageData.height
-                mTriangle.updateVertex(iR_ImageData)
-                maxBitmap = initFontBitmap(iR_ImageData.max_temp, true)
-                minBitmap = initFontBitmap(iR_ImageData.min_temp)
+                buffer = ir_ImageData.buffer
+                mVideoWidth = ir_ImageData.width
+                mVideoHeight = ir_ImageData.height
+                if (isPeizhun) {
+                    mTriangle.updateVertex(ir_ImageData, pointIR1_x, pointIR1_y, pointIR2_x, pointIR2_y, pointIR3_x, pointIR3_y)
+                } else {
+                    mTriangle.updateVertex(ir_ImageData)
+                }
+                maxBitmap = initFontBitmap(ir_ImageData.max_temp, true)
+                minBitmap = initFontBitmap(ir_ImageData.min_temp)
                 if (null != maxBitmap && !maxBitmap!!.isRecycled) {
-                    maxTexBitmap.updateVertex(iR_ImageData, iR_ImageData.max_x, iR_ImageData.max_y)
+                    maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
                 }
                 if (null != minBitmap && !minBitmap!!.isRecycled) {
-                    minTexBitmap.updateVertex(iR_ImageData, iR_ImageData.min_x, iR_ImageData.min_y)
+                    minTexBitmap.updateVertex(ir_ImageData, ir_ImageData.min_x, ir_ImageData.min_y)
                 }
             }
             mTargetSurface?.requestRender()
         }
     }
 
+    fun setPeizhun(isPz: Boolean) {
+        isPeizhun = isPz
+        mTriangle.isPeizhun = isPz
+    }
+
+    private var isPeizhun = false
     private val prog = TextureRGB()
     private var maxTexBitmap = TextBitmap()
     private var minTexBitmap = TextBitmap()
@@ -50,19 +67,16 @@ class GLRGBRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlRen
     private var mVideoHeight = -1
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
-        Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         if (!prog.isProgramBuilt) {
             prog.buildProgram()
             maxTexBitmap.buildProgram()
             minTexBitmap.buildProgram()
             //初始化三角形
             mTriangle.buildProgram()
-            Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
-        Log.d("tag", "GLFrameRenderer :: onSurfaceChanged")
         GLES20.glViewport(0, 0, width, height)
     }
 

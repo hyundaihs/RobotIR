@@ -1,5 +1,6 @@
 package com.hzncc.kevin.robot_ir
 
+import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -82,6 +83,7 @@ class GalleryActivity : AppCompatActivity() {
             Picasso.with(context).load(File(SDCardUtil.IMAGE_VL + logData.vlImage))
                     .into(view.vlImage)
             container?.addView(view)
+            view.setOnClickListener { (context as Activity).finish() }
             return view
         }
 

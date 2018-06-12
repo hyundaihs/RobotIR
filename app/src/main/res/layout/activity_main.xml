@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.hzncc.kevin.robot_ir.MainActivity">
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="com.hzncc.kevin.robot_ir.MainActivity">
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
@@ -21,17 +21,16 @@
                 android:id="@+id/surfaceViewL"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1" />
+                android:layout_weight="1"/>
 
             <android.opengl.GLSurfaceView
                 android:id="@+id/surfaceViewR"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1" />
+                android:layout_weight="1"/>
         </LinearLayout>
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/gallery"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@android:color/black"
@@ -39,100 +38,181 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/layout_surface" />
+            app:layout_constraintTop_toBottomOf="@id/layout_surface">
+
+            <ImageView
+                android:id="@+id/irImage"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:contentDescription="@null"/>
+
+            <ImageView
+                android:id="@+id/vlImage"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:contentDescription="@null"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+
+                    <Button
+                        android:id="@+id/peizhun"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:onClick="onClick"
+                        android:text="配准"
+                        android:textColor="@android:color/white"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/white"/>
+
+                    <Button
+                        android:id="@+id/clean"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:onClick="onClick"
+                        android:text="清除"
+                        android:background="@android:color/transparent"
+                        android:textColor="@android:color/white"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/white"/>
+
+                    <Button
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:textColor="@android:color/white"
+                        android:visibility="invisible"/>
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/white"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+
+                    <Button
+                        android:id="@+id/max"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:onClick="onClick"
+                        android:text="高温"
+                        android:textColor="@android:color/white"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/white"/>
+
+                    <Button
+                        android:id="@+id/min"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:onClick="onClick"
+                        android:text="低温"
+                        android:textColor="@android:color/white"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/white"/>
+
+                    <Button
+                        android:id="@+id/correct"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:onClick="onClick"
+                        android:text="温补"
+                        android:textColor="@android:color/white"/>
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/white"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/openIR"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:onClick="onClick"
+                        android:text="开启红外"
+                        android:textColor="@android:color/white"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/white"/>
+
+                    <Button
+                        android:id="@+id/openVL"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:onClick="onClick"
+                        android:text="开启可见光"
+                        android:textColor="@android:color/white"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/white"/>
+
+                    <Button
+                        android:id="@+id/openWarn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:onClick="onClick"
+                        android:text="开启报警"
+                        android:textColor="@android:color/white"/>
+                </LinearLayout>
+
+
+            </LinearLayout>
+        </LinearLayout>
 
     </android.support.constraint.ConstraintLayout>
 
-    <LinearLayout
-        android:id="@+id/right_buttons"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:background="@android:color/black"
-        android:orientation="vertical"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:visibility="visible">
-
-        <Button
-            android:id="@+id/openIR"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:onClick="onClick"
-            android:text="开启红外"
-            android:textColor="@android:color/white" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/white" />
-
-        <Button
-            android:id="@+id/openVL"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:onClick="onClick"
-            android:text="开启可见光"
-            android:textColor="@android:color/white" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/white" />
-
-        <Button
-            android:id="@+id/openWarn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:onClick="onClick"
-            android:text="开启报警"
-            android:textColor="@android:color/white" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/white" />
-
-        <Button
-            android:id="@+id/max"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:onClick="onClick"
-            android:text="高温"
-            android:textColor="@android:color/white" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/white" />
-
-        <Button
-            android:id="@+id/min"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:onClick="onClick"
-            android:text="低温"
-            android:textColor="@android:color/white" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/white" />
-
-        <Button
-            android:id="@+id/correct"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:onClick="onClick"
-            android:text="温补"
-            android:textColor="@android:color/white" />
-
-
-    </LinearLayout>
 </RelativeLayout>

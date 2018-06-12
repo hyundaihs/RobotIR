@@ -4,14 +4,18 @@ import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.util.Log
-import com.hzncc.kevin.robot_ir.createBitmapFromGLSurface
+import com.hzncc.kevin.robot_ir.*
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR1_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR1_y
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR2_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR2_y
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR3_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointIR3_y
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
-import com.hzncc.kevin.robot_ir.initFontBitmap
-import com.hzncc.kevin.robot_ir.ir_ImageData
-import com.hzncc.kevin.robot_ir.saveBitmap
 import com.hzncc.kevin.robot_ir.textures.TextBitmap
 import com.hzncc.kevin.robot_ir.textures.TextureBitmap
 import com.hzncc.kevin.robot_ir.textures.Triangle
+import com.hzncc.kevin.robot_ir.utils.Preference
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -21,12 +25,17 @@ import javax.microedition.khronos.opengles.GL10
  * Created by 蔡雨峰 on 2018/1/16.
  */
 class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlRenderer() {
+
     override fun update(`object`: Any?) {
-        if(`object`is IR_ImageData){
+        if (`object` is IR_ImageData) {
             val ir_ImageData = `object`
             synchronized(this) {
                 bitmap = ir_ImageData.bitmap
-                mTriangle.updateVertex(ir_ImageData)
+                if (isPeizhun) {
+                    mTriangle.updateVertex(ir_ImageData, pointIR1_x, pointIR1_y, pointIR2_x, pointIR2_y, pointIR3_x, pointIR3_y)
+                } else {
+                    mTriangle.updateVertex(ir_ImageData)
+                }
                 maxBitmap = initFontBitmap(ir_ImageData.max_temp, true)
                 minBitmap = initFontBitmap(ir_ImageData.min_temp)
                 if (null != maxBitmap && !maxBitmap!!.isRecycled) {
@@ -40,6 +49,13 @@ class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGl
         }
     }
 
+    fun setPeizhun(isPz: Boolean) {
+        isPeizhun = isPz
+        mTriangle.isPeizhun = isPz
+    }
+
+
+    private var isPeizhun = false
     private val prog = TextureBitmap()
     private var maxTexBitmap = TextBitmap()
     private var minTexBitmap = TextBitmap()
@@ -49,19 +65,16 @@ class GLBitmapRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGl
     private var mTriangle: Triangle = Triangle()
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
-        Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         if (!prog.isProgramBuilt) {
             prog.buildProgram()
             maxTexBitmap.buildProgram()
             minTexBitmap.buildProgram()
             //初始化三角形
             mTriangle.buildProgram()
-            Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
-        Log.d("tag", "GLFrameRenderer :: onSurfaceChanged")
         GLES20.glViewport(0, 0, width, height)
     }
 

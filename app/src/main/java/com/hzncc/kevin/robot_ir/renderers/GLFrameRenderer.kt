@@ -4,14 +4,27 @@ import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.util.Log
+import com.hzncc.kevin.robot_ir.App.Companion.pointVL1_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointVL1_y
+import com.hzncc.kevin.robot_ir.App.Companion.pointVL2_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointVL2_y
+import com.hzncc.kevin.robot_ir.App.Companion.pointVL3_x
+import com.hzncc.kevin.robot_ir.App.Companion.pointVL3_y
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.textures.TextBitmap
 import com.hzncc.kevin.robot_ir.textures.TextureYuv
 import com.hzncc.kevin.robot_ir.textures.Triangle
+import com.hzncc.kevin.robot_ir.utils.Preference
 import java.nio.ByteBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import android.R.attr.y
+import android.R.attr.x
+import com.hzncc.kevin.robot_ir.App
+import com.hzncc.kevin.robot_ir.App.Companion.isPeizhund
+import com.hzncc.kevin.robot_ir.D
+
 
 /**
  * Robot
@@ -19,12 +32,28 @@ import javax.microedition.khronos.opengles.GL10
  */
 
 class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlRenderer() {
+
     override fun update(`object`: Any?) {
         if (`object` is IR_ImageData) {
             val ir_ImageData = `object`
-            mTriangle.updateVertex(ir_ImageData)
+            if (isPeizhund) {
+                val posMax = countPosition(ir_ImageData.max_x, ir_ImageData.max_y)
+                val posMin = countPosition(ir_ImageData.min_x, ir_ImageData.min_y)
+                ir_ImageData.max_x = posMax[0]
+                ir_ImageData.max_y = posMax[1]
+                ir_ImageData.min_x = posMin[0]
+                ir_ImageData.min_y = posMin[1]
+            }
+
+            if (isPeizhun) {
+                mTriangle.updateVertex(ir_ImageData, pointVL1_x, pointVL1_y, pointVL2_x, pointVL2_y, pointVL3_x, pointVL3_y)
+            } else {
+                mTriangle.updateVertex(ir_ImageData)
+            }
             maxBitmap = initFontBitmap(ir_ImageData.max_temp, true)
             minBitmap = initFontBitmap(ir_ImageData.min_temp)
+
+
             if (null != maxBitmap && !maxBitmap!!.isRecycled) {
                 maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
             }
@@ -34,6 +63,26 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
         }
     }
 
+    fun countPosition(xi: Int, yi: Int): IntArray {
+        val pos = IntArray(2)
+        val x2 = App.param1
+        val x1 = App.param2
+        val cx = App.param3
+        val y2 = App.param4
+        val y1 = App.param5
+        val cy = App.param6
+
+        pos[0] = (xi * x2 + yi * x1 + cx).toInt()
+        pos[1] = (xi * y2 + yi * y1 + cy).toInt()
+        return pos
+    }
+
+    fun setPeizhun(isPz: Boolean) {
+        isPeizhun = isPz
+        mTriangle.isPeizhun = isPz
+    }
+
+    private var isPeizhun = false
     private val prog = TextureYuv()
     private var maxTexBitmap = TextBitmap()
     private var minTexBitmap = TextBitmap()
@@ -47,7 +96,6 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
     private var mTriangle: Triangle = Triangle()
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
-        Log.d("tag", "GLFrameRenderer :: onSurfaceCreated")
         // 设置清屏颜色为黑色
         GLES20.glClearColor(0f, 0f, 0f, 0f)
         if (!prog.isProgramBuilt) {
@@ -56,22 +104,15 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
             minTexBitmap.buildProgram()
             //初始化三角形
             mTriangle.buildProgram()
-            Log.d("tag", "GLFrameRenderer :: buildProgram done")
         }
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
-        Log.d("tag", "GLFrameRenderer :: onSurfaceChanged")
         GLES20.glViewport(0, 0, width, height)
     }
 
     override fun onDrawFrame(gl: GL10) {
         synchronized(this) {
-            //                        if (isTakePicture) {
-//                val bmp = createBitmapFromGLSurface(0, 0, mTargetSurface.width, mTargetSurface.height, gl)
-//                saveBitmap(mTargetSurface.context, fileName, bmp!!)
-//                isTakePicture = false
-//            }
             if (y != null) {
                 // reset position, have to be done
                 y!!.position(0)

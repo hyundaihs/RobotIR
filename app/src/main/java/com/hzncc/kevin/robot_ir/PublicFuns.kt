@@ -29,20 +29,27 @@ import javax.microedition.khronos.opengles.GL10
  * Robot
  * Created by 蔡雨峰 on 2018/1/8.
  */
+
+val debug = false
+
 fun Any.D(msg: String, tag: String = this.javaClass.simpleName) {
-    Log.d(tag, msg)
+    if (debug)
+        Log.d(tag, msg)
 }
 
 fun Any.E(msg: String, tag: String = this.javaClass.simpleName) {
-    Log.e(tag, msg)
+    if (debug)
+        Log.e(tag, msg)
 }
 
 fun Any.I(msg: String, tag: String = this.javaClass.simpleName) {
-    Log.i(tag, msg)
+    if (debug)
+        Log.i(tag, msg)
 }
 
 fun Any.V(msg: String, tag: String = this.javaClass.simpleName) {
-    Log.v(tag, msg)
+    if (debug)
+        Log.v(tag, msg)
 }
 
 fun Any.detectOpenGLES20(context: Context): Boolean {
@@ -50,8 +57,6 @@ fun Any.detectOpenGLES20(context: Context): Boolean {
     val info = am.deviceConfigurationInfo
     return info.reqGlEsVersion >= 0x20000
 }
-
-var ir_ImageData: IR_ImageData? = null
 
 /**
  * @param vertexs float 数组
@@ -195,7 +200,7 @@ val actionSaveBitmap: String = "ACTION_SAVE_BITMAP"
 var saveName = ""
 
 //图片保存
-fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false) {
+fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false, time: Long, isMaxWarn: Boolean, warnTemp: Float) {
     var path = ""
     if (isIR) {
         path = SDCardUtil.IMAGE_IR
@@ -218,14 +223,11 @@ fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false) {
         e.printStackTrace()
     }
     if (saveName == fileName) {
-        App.instance.mData.add(0, Log_Data(fileName, fileName))
+        App.instance.mData.add(0, Log_Data(fileName, fileName, time, isMaxWarn = isMaxWarn, warnTemp = warnTemp))
         val intent = Intent(actionSaveBitmap)
         sendBroadcast(intent)
     } else {
         saveName = fileName
-    }
-    runOnUiThread {
-        Toast.makeText(this, "报警图片保存成功->" + jpegName, Toast.LENGTH_SHORT).show()
     }
 }
 

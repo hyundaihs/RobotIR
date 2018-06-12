@@ -235,4 +235,8 @@ public class CameraUtil {
         return CameraSDK.getMinY(handle);
     }
 
+//    public static void GetAffinePara1(double[] pIr, double[] pVis, double[] pPara) {
+//        CameraSDK.GetAffinePara1(pIr, pVis, pPara);
+//    }
+
 }
