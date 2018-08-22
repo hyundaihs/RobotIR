@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.hzncc.kevin.circleselector.CircleSeekBar
+        android:id="@+id/seekbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="15dp"
+        app:wheel_max_process="1500"
+        app:wheel_min_process="0"
+        app:wheel_pointer_color="@color/colorPrimary"
+        app:wheel_pointer_radius="5dp"
+        app:wheel_reached_width="5dp"
+        app:wheel_unreached_width="3dp" />
+
+    <TextView
+        android:id="@+id/value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/black" />
+
+</android.support.constraint.ConstraintLayout>

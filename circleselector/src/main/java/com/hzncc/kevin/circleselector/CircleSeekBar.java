@@ -16,6 +16,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.math.BigDecimal;
+
 /**
  * Created by gaopengfei on 15/11/15.
  */
@@ -25,6 +27,7 @@ public class CircleSeekBar extends View {
 
     private static final String INATANCE_STATE = "state";
     private static final String INSTANCE_MAX_PROCESS = "max_process";
+    private static final String INSTANCE_MIN_PROCESS = "min_process";
     private static final String INSTANCE_CUR_PROCESS = "cur_process";
     private static final String INSTANCE_REACHED_COLOR = "reached_color";
     private static final String INSTANCE_REACHED_WIDTH = "reached_width";
@@ -49,8 +52,9 @@ public class CircleSeekBar extends View {
 
     private Paint mPointerPaint;
 
-    private int mMaxProcess;
-    private int mCurProcess;
+    private float mMaxProcess;
+    private float mMinProcess;
+    private float mCurProcess;
     private float mUnreachedRadius;
     private int mReachedColor, mUnreachedColor;
     private float mReachedWidth, mUnreachedWidth;
@@ -133,8 +137,10 @@ public class CircleSeekBar extends View {
     private void initAttrs(AttributeSet attrs, int defStyle) {
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.CircleSeekBar, defStyle, 0);
         mMaxProcess = a.getInt(R.styleable.CircleSeekBar_wheel_max_process, 100);
+        mMinProcess = a.getInt(R.styleable.CircleSeekBar_wheel_min_process, 0);
         mCurProcess = a.getInt(R.styleable.CircleSeekBar_wheel_cur_process, 0);
         if (mCurProcess > mMaxProcess) mCurProcess = mMaxProcess;
+        if (mCurProcess < mMinProcess) mCurProcess = mMinProcess;
         mReachedColor = a.getColor(R.styleable.CircleSeekBar_wheel_reached_color, getColor(R.color.def_reached_color));
         mUnreachedColor = a.getColor(R.styleable.CircleSeekBar_wheel_unreached_color,
                 getColor(R.color.def_wheel_color));
@@ -305,7 +311,7 @@ public class CircleSeekBar extends View {
     }
 
     private void refershPosition() {
-        mCurAngle = (double) mCurProcess / mMaxProcess * 360.0;
+        mCurAngle = (double) (mCurProcess - mMinProcess) / (mMaxProcess - mMinProcess) * 360.0;
         double cos = -Math.cos(Math.toRadians(mCurAngle));
         refershWheelCurPosition(cos);
     }
@@ -336,8 +342,9 @@ public class CircleSeekBar extends View {
     protected Parcelable onSaveInstanceState() {
         Bundle bundle = new Bundle();
         bundle.putParcelable(INATANCE_STATE, super.onSaveInstanceState());
-        bundle.putInt(INSTANCE_MAX_PROCESS, mMaxProcess);
-        bundle.putInt(INSTANCE_CUR_PROCESS, mCurProcess);
+        bundle.putFloat(INSTANCE_MAX_PROCESS, mMaxProcess);
+        bundle.putFloat(INSTANCE_MIN_PROCESS, mMinProcess);
+        bundle.putFloat(INSTANCE_CUR_PROCESS, mCurProcess);
         bundle.putInt(INSTANCE_REACHED_COLOR, mReachedColor);
         bundle.putFloat(INSTANCE_REACHED_WIDTH, mReachedWidth);
         bundle.putBoolean(INSTANCE_REACHED_CORNER_ROUND, isHasReachedCornerRound);
@@ -360,8 +367,9 @@ public class CircleSeekBar extends View {
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
             super.onRestoreInstanceState(bundle.getParcelable(INATANCE_STATE));
-            mMaxProcess = bundle.getInt(INSTANCE_MAX_PROCESS);
-            mCurProcess = bundle.getInt(INSTANCE_CUR_PROCESS);
+            mMaxProcess = bundle.getFloat(INSTANCE_MAX_PROCESS);
+            mMinProcess = bundle.getFloat(INSTANCE_MIN_PROCESS);
+            mCurProcess = bundle.getFloat(INSTANCE_CUR_PROCESS);
             mReachedColor = bundle.getInt(INSTANCE_REACHED_COLOR);
             mReachedWidth = bundle.getFloat(INSTANCE_REACHED_WIDTH);
             isHasReachedCornerRound = bundle.getBoolean(INSTANCE_REACHED_CORNER_ROUND);
@@ -386,16 +394,19 @@ public class CircleSeekBar extends View {
         }
     }
 
-    private int getSelectedValue() {
-        return Math.round(mMaxProcess * ((float) mCurAngle / 360));
+    private float getSelectedValue() {
+        double rel = (mMaxProcess - mMinProcess) / 360 * mCurAngle + mMinProcess;
+        BigDecimal b = new BigDecimal(rel);
+        return b.setScale(1, BigDecimal.ROUND_HALF_UP).floatValue();
     }
 
-    public int getCurProcess() {
+    public float getCurProcess() {
         return mCurProcess;
     }
 
     public void setCurProcess(int curProcess) {
         this.mCurProcess = curProcess > mMaxProcess ? mMaxProcess : curProcess;
+        this.mCurProcess = curProcess < mMinProcess ? mMinProcess : curProcess;
         if (mChangListener != null) {
             mChangListener.onChanged(this, curProcess);
         }
@@ -403,12 +414,22 @@ public class CircleSeekBar extends View {
         invalidate();
     }
 
-    public int getMaxProcess() {
+    public float getMaxProcess() {
         return mMaxProcess;
     }
 
-    public void setMaxProcess(int maxProcess) {
+    public void setMaxProcess(float maxProcess) {
         mMaxProcess = maxProcess;
+        refershPosition();
+        invalidate();
+    }
+
+    public float getMinProcess(){
+        return mMinProcess;
+    }
+
+    public void setMinProcess(float minProcess){
+        mMinProcess = minProcess;
         refershPosition();
         invalidate();
     }
@@ -533,6 +554,6 @@ public class CircleSeekBar extends View {
     }
 
     public interface OnSeekBarChangeListener {
-        void onChanged(CircleSeekBar seekbar, int curValue);
+        void onChanged(CircleSeekBar seekbar, float curValue);
     }
 }

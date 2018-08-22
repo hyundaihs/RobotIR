@@ -59,5 +59,5 @@ dependencies {
     implementation files('IR_SDK.jar')
     implementation files('QiHanConnect.jar')
     implementation 'com.google.code.gson:gson:2.8.0'
-
+    implementation project(':circleselector')
 }

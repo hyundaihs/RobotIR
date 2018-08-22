@@ -27,6 +27,7 @@
         </activity>
         <activity android:name="com.hzncc.kevin.robot_ir.GalleryActivity"
             android:screenOrientation="landscape"/>
+        <activity android:name=".CircleSelectorActivity" />
     </application>
 
 </manifest>

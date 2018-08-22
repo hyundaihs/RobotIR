@@ -2,6 +2,7 @@
 <resources>
     <declare-styleable name="CircleSeekBar">
         <attr name="wheel_max_process" format="integer" />
+        <attr name="wheel_min_process" format="integer" />
         <attr name="wheel_cur_process" format="integer" />
         <attr name="wheel_reached_color" format="color" />
         <attr name="wheel_reached_width" format="dimension" />
