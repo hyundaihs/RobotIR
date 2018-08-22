@@ -3,7 +3,8 @@ package com.hzncc.kevin.robot_ir.renderers
 import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
-import android.util.Log
+import com.hzncc.kevin.robot_ir.App
+import com.hzncc.kevin.robot_ir.App.Companion.isPeizhund
 import com.hzncc.kevin.robot_ir.App.Companion.pointVL1_x
 import com.hzncc.kevin.robot_ir.App.Companion.pointVL1_y
 import com.hzncc.kevin.robot_ir.App.Companion.pointVL2_x
@@ -15,15 +16,10 @@ import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.textures.TextBitmap
 import com.hzncc.kevin.robot_ir.textures.TextureYuv
 import com.hzncc.kevin.robot_ir.textures.Triangle
-import com.hzncc.kevin.robot_ir.utils.Preference
+import com.hzncc.kevin.robot_ir.utils.HcvisionUtil
 import java.nio.ByteBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import android.R.attr.y
-import android.R.attr.x
-import com.hzncc.kevin.robot_ir.App
-import com.hzncc.kevin.robot_ir.App.Companion.isPeizhund
-import com.hzncc.kevin.robot_ir.D
 
 
 /**
@@ -160,14 +156,16 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
     /**
      * this method will be called from native code, it's used for passing yuv data to me.
      */
-    fun update(ydata: ByteArray, udata: ByteArray, vdata: ByteArray, ir_ImageData: IR_ImageData) {
+    fun update(data: ByteArray, ir_ImageData: IR_ImageData) {
         synchronized(this) {
             y!!.clear()
             u!!.clear()
             v!!.clear()
-            y!!.put(ydata, 0, ydata.size)
-            u!!.put(udata, 0, udata.size)
-            v!!.put(vdata, 0, vdata.size)
+            y!!.put(data, 0, HcvisionUtil.width * HcvisionUtil.height)
+            v!!.put(data, HcvisionUtil.width * HcvisionUtil.height,
+                    HcvisionUtil.width * HcvisionUtil.height / 4)
+            u!!.put(data, HcvisionUtil.width * HcvisionUtil.height +
+                    HcvisionUtil.width * HcvisionUtil.height / 4, HcvisionUtil.width * HcvisionUtil.height / 4)
             update(ir_ImageData)
         }
 

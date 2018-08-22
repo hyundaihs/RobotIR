@@ -12,9 +12,9 @@
     <application
         android:name="com.hzncc.kevin.robot_ir.App"
         android:allowBackup="true"
-        android:icon="@mipmap/app_logo"
+        android:icon="@mipmap/logo"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/app_logo"
+        android:roundIcon="@mipmap/logo"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name="com.hzncc.kevin.robot_ir.MainActivity"

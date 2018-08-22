@@ -8,12 +8,9 @@ import android.graphics.*
 import android.opengl.GLES20
 import android.opengl.GLException
 import android.util.Log
-import android.widget.Toast
 import com.bigkoo.pickerview.OptionsPickerView
-import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.data.Log_Data
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
-import org.jetbrains.anko.runOnUiThread
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -223,8 +220,10 @@ fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false, time:
         e.printStackTrace()
     }
     if (saveName == fileName) {
-        App.instance.mData.add(0, Log_Data(fileName, fileName, time, isMaxWarn = isMaxWarn, warnTemp = warnTemp))
+        App.instance.mData.add(0, Log_Data(fileName, fileName, time,
+                isMaxWarn = isMaxWarn, warnTemp = warnTemp))
         val intent = Intent(actionSaveBitmap)
+        intent.putExtra("temp", warnTemp)
         sendBroadcast(intent)
     } else {
         saveName = fileName

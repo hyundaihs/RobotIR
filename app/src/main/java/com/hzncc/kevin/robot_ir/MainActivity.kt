@@ -1,35 +1,14 @@
 package com.hzncc.kevin.robot_ir
 
-import android.app.Notification
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.graphics.*
+import android.media.MediaPlayer
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.view.View
-import com.hzncc.kevin.robot_ir.data.IR_ImageData
-import com.hzncc.kevin.robot_ir.jni.CameraUtil
-import com.hzncc.kevin.robot_ir.jni.Device_w324_h256
-import com.hzncc.kevin.robot_ir.jni.HcvisionUtil
-import com.hzncc.kevin.robot_ir.jni.LeptonStatus
-import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
-import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
-import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer
-import com.hzncc.kevin.robot_ir.utils.*
-import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.doAsync
-import java.io.File
-import java.nio.ShortBuffer
-import android.app.NotificationManager
-import android.app.ProgressDialog
-import android.media.MediaPlayer
-import android.media.RingtoneManager
-import android.net.Uri
-import android.view.MotionEvent
-import com.sp.peizhun.PeiZhunUtil
+import android.view.*
+import android.widget.EditText
 import com.hzncc.kevin.robot_ir.App.Companion.isPeizhund
 import com.hzncc.kevin.robot_ir.App.Companion.param1
 import com.hzncc.kevin.robot_ir.App.Companion.param2
@@ -49,25 +28,29 @@ import com.hzncc.kevin.robot_ir.App.Companion.pointVL2_x
 import com.hzncc.kevin.robot_ir.App.Companion.pointVL2_y
 import com.hzncc.kevin.robot_ir.App.Companion.pointVL3_x
 import com.hzncc.kevin.robot_ir.App.Companion.pointVL3_y
+import com.hzncc.kevin.robot_ir.data.IR_ImageData
+import com.hzncc.kevin.robot_ir.qi_han.QiHanConnectUtil
+import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
+import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
+import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer
+import com.hzncc.kevin.robot_ir.utils.*
+import com.hzsk.camera.CameraUtil
+import com.hzsk.camera.Device_w324_h256
+import com.hzsk.camera.LeptonStatus
+import com.sp.peizhun.PeiZhunUtil
+import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
-import org.jetbrains.anko.uiThread
+import java.io.File
+import java.nio.ShortBuffer
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View) {
         handle = true
         when (v.id) {
-            R.id.openIR -> {
-//                if (openIR.text.toString() == "开启监控") {
-//                    openIR.text = "开启中"
-//                    openCameras()
-//                } else if (openIR.text.toString() == "关闭监控") {
-//                    closeCameras()
-//                    openIR.text = "开启监控"
-//                }
-                openIR()
-            }
-            R.id.openVL -> openCamera()
+            R.id.openIR -> startIR()
+            R.id.openVL -> startVL()
             R.id.openWarn -> openWarn()
             R.id.max -> showPickers(true)
             R.id.min -> showPickers()
@@ -88,57 +71,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun openCameras() {
-//        val progressDialog = ProgressDialog(this)
-//        progressDialog.show()
-        doAsync {
-            if (!hcvisionUtil.isLogined()) {
-                if (hcvisionUtil.login()) {
-                    E("login success")
-
-                } else {
-                    E("login failed")
-                    uiThread {
-                        toast("Login failed")
-                    }
-                }
-            }
-
-            if (hcvisionUtil.startPreview(hcRender)) {
-                E("startPreview success")
-            } else {
-                E("startPreview failed")
-                uiThread {
-                    toast("startPreview failed")
-                }
-            }
-
-            cameraUtil.open("192.168.3.9", 50001)
-//            cameraUtil.open("10.10.30.9", 50001)
-            cameraUtil.colorName = 9
-            cameraUtil.start()
-            uiThread {
-                openIR.text = "关闭监控"
-//                progressDialog.cancel()
-            }
-        }
-    }
-
-    private fun closeCameras() {
-        doAsync {
-            cameraUtil.stop()
-            if (HcvisionUtil.m_iLogID > 0) {
-                hcvisionUtil.stopPreview()
-            }
-        }
-    }
-
 
     private fun openIR() {
+        cameraUtil.open(irIP, 50001)
+        cameraUtil.colorName = 9
+    }
+
+    private fun startIR() {
+        if(!cameraUtil.isOpened){
+            openIR()
+        }
         if (openIR.text == "开启红外") {
             openIR.text = "开启中..."
-            cameraUtil.open("192.168.3.9", 50001)
-//            cameraUtil.open("10.10.30.9", 50001)
             cameraUtil.colorName = 9
             cameraUtil.start()
             openIR.text = "关闭红外"
@@ -148,45 +92,43 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun openCamera() {
-        doAsync {
-            if (openVL.text == "开启可见光") {
-                uiThread {
-                    openVL.text = "开启中..."
-                }
-                if (!hcvisionUtil.isLogined()) {
-                    if (hcvisionUtil.login()) {
-                        E("login success")
-//                        uiThread {
-//                            toast("Login failed")
-//                        }
-                    } else {
-                        E("login failed")
-//                        uiThread {
-//                            toast("Login failed")
-//                        }
-                    }
-                }
-                if (hcvisionUtil.startPreview(hcRender)) {
-                    E("startPreview success")
-                } else {
-                    E("startPreview failed")
-//                    uiThread {
-//                        toast("startPreview failed")
-//                    }
-                }
-                uiThread {
-                    openVL.text = "关闭可见光"
-                }
-            } else if (openVL.text == "关闭可见光") {
-                if (HcvisionUtil.m_iLogID > 0) {
-                    hcvisionUtil.stopPreview()
-                }
-                uiThread {
-                    openVL.text = "开启可见光"
-                }
+
+    private fun openVL() {
+        if (!hcvisionUtil.isLogined()) {
+            if (!hcvisionUtil.login()) {
+                toast("Login failed")
+                return
             }
         }
+    }
+
+    private fun startVL() {
+        if(!hcvisionUtil.isLogined()){
+            openVL()
+        }
+        if (openVL.text == "开启可见光") {
+            openVL.text = "开启中..."
+            if (!hcvisionUtil.startPreview(hcRender)) {
+                E("startPreview failed")
+                return
+            }
+            openVL.text = "关闭可见光"
+        } else if (openVL.text == "关闭可见光") {
+            if (hcvisionUtil.isLogined() && HcvisionUtil.m_iPlayID >= 0) {
+                hcvisionUtil.stopPreview()
+            }
+            openVL.text = "开启可见光"
+        }
+    }
+
+    private fun closeIR() {
+        cameraUtil.close()
+        openIR.text = "开启红外"
+    }
+
+    private fun closeVL() {
+        hcvisionUtil.loginOut()
+        openVL.text = "开启可见光"
     }
 
     override fun onBackPressed() {
@@ -208,6 +150,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var maxWarn by Preference("max_warn", 0)
     private var minWarn by Preference("min_warn", 0)
     private var correctTemp: Float by Preference("correct_temp", 0.0f)
+
     private var isPeizhun = false
     private var irDownX = 0f
     private var irDownY = 0f
@@ -226,18 +169,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         super.onResume()
         val intentFilter = IntentFilter(actionSaveBitmap)
         registerReceiver(broadcastReceiver, intentFilter)
-        if (!hcvisionUtil.isLogined()) {
-            doAsync {
-                if (hcvisionUtil.login()) {
-                    E("login success")
-                    uiThread {
-                        toast("LoginSuccess")
-                    }
-                } else {
-                    E("login failed")
-                }
-            }
-        }
+
     }
 
     override fun onDestroy() {
@@ -258,13 +190,28 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 //                val options = BitmapFactory.Options().apply {
 //                    inSampleSize = 4
 //                }
+                val warnTemp: Float = intent.getFloatExtra("temp", 0.0f)
                 irImage.setImageBitmap(
                         BitmapFactory.decodeFile(SDCardUtil.IMAGE_IR + App.instance.mData[0].irImage))
                 vlImage.setImageBitmap(
                         BitmapFactory.decodeFile(SDCardUtil.IMAGE_VL + App.instance.mData[0].vlImage))
                 warn()
+                doAsync {
+                    sendMessage(SDCardUtil.IMAGE_IR + App.instance.mData[0].irImage,
+                            SDCardUtil.IMAGE_VL + App.instance.mData[0].vlImage, warnTemp)
+                }
             }
         }
+    }
+
+    fun sendMessage(ir: String, vl: String, temp: Float) {
+        val contacts = QiHanConnectUtil.getContactInfo(this)
+        QiHanConnectUtil.sendStringMessage2AllContact(this,
+                contacts, "有新的报警信息,异常温度:$temp℃", "")
+        val path = ArrayList<String>()
+        path.add(ir)
+        path.add(vl)
+        QiHanConnectUtil.sendPicture2AllContact(this, contacts, path)
     }
 
     var mMediaPlayer: MediaPlayer? = null
@@ -272,6 +219,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        window.setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         surfaceViewL.setEGLContextClientVersion(2)
         surfaceViewR.setEGLContextClientVersion(2)
         if (isBitmapDraw) {
@@ -297,6 +246,69 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
         openThread()
         initDatas()
+
+        irImage.setOnClickListener {
+            startActivity(Intent(this, GalleryActivity::class.java))
+        }
+        vlImage.setOnClickListener {
+            startActivity(Intent(this, GalleryActivity::class.java))
+        }
+        ipAlert.setOnClickListener {
+            showDialog()
+        }
+
+        openIR()
+        openVL()
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.KEYCODE_BACK){
+            home()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    fun home(){
+        val intent = Intent(Intent.ACTION_MAIN)
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addCategory(Intent.CATEGORY_HOME)
+        startActivity(intent)
+    }
+
+    fun showDialog() {
+        val dialog = AlertDialog.Builder(this)
+        dialog.setTitle("修改IP地址")
+        val view = LayoutInflater.from(this).inflate(R.layout.alert_ip_layout,
+                null, false)
+        val irEdit = view.findViewById<EditText>(R.id.irEdit)
+        val vlEdit = view.findViewById<EditText>(R.id.vlEdit)
+
+        dialog.setView(view)
+        irEdit.setText(irIP)
+        vlEdit.setText(vlIP)
+        dialog.setPositiveButton("修改", object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface?, which: Int) {
+                if (irEdit.text.trim().isEmpty() || vlEdit.text.trim().isEmpty()) {
+                    toast("IP配置失败")
+                    return
+                }
+                irIP = irEdit.text.toString()
+                vlIP = vlEdit.text.toString()
+                closeVL()
+                closeIR()
+                openIR()
+                openVL()
+            }
+        })
+        dialog.setNegativeButton( "取消", object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface?, which: Int) {
+                toast("取消配置")
+            }
+        })
+
+        dialog.create()
+        dialog.show()
     }
 
     fun clear() {
@@ -315,11 +327,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         min.text = "低温报警:$minWarn℃"
         correct.text = "温度补偿:$correctTemp℃"
 
-        irImage.setImageBitmap(
-                BitmapFactory.decodeFile(SDCardUtil.IMAGE_IR + App.instance.mData[0].irImage))
-        vlImage.setImageBitmap(
-                BitmapFactory.decodeFile(SDCardUtil.IMAGE_VL + App.instance.mData[0].vlImage))
-
+        if (App.instance.mData.size > 0) {
+            irImage.setImageBitmap(
+                    BitmapFactory.decodeFile(SDCardUtil.IMAGE_IR + App.instance.mData[0].irImage))
+            vlImage.setImageBitmap(
+                    BitmapFactory.decodeFile(SDCardUtil.IMAGE_VL + App.instance.mData[0].vlImage))
+        }
         surfaceViewL.setOnTouchListener { v, event ->
             if (isPeizhun) {
                 val w = surfaceViewL.width.toFloat()
@@ -542,6 +555,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private val isBitmapDraw = true
 
     companion object {
+        var irIP: String by Preference("ir_ip", "10.10.24.100")
+        var vlIP: String by Preference("vl_ip", "10.10.24.101")
         var viewWidth = 0
         var viewHeight = 0
         var isRun = true
@@ -583,7 +598,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         if (off >= 600000) {
                             startTime = currTime
                             cameraUtil.correct()
-                            D("校正")
                         }
                     }
                     App.ir_imageData = getNext(isBitmapDraw)
@@ -597,8 +611,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         if (App.ir_imageData.max_temp >= maxWarn || App.ir_imageData.min_temp <= minWarn) {
                             val calendarUtil = CalendarUtil()
                             val time = calendarUtil.timeInMillis
-                            var isMaxWarn = false
-                            var warnTemp = 0.0f
+                            var isMaxWarn: Boolean
+                            var warnTemp: Float
                             if (App.ir_imageData.max_temp >= maxWarn) {
                                 isMaxWarn = true
                                 warnTemp = App.ir_imageData.max_temp
@@ -631,21 +645,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     fun warn() {
         mMediaPlayer?.start()
-//        val path = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.tts)
-//        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-//        val builder = Notification.Builder(this)
-//        builder.setContentText("有新的报警信息")
-//        builder.setSmallIcon(R.mipmap.ic_launcher)
-//        builder.setTicker("新消息")
-//        builder.setAutoCancel(true)
-//        builder.setSound(path)
-//
-//        builder.setWhen(System.currentTimeMillis())//设置时间，设置为系统当前的时间
-//        val notification = builder.build()
-////        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-//        notification.sound = path
-//        notification.defaults = Notification.DEFAULT_ALL
-//        manager.notify(1, notification)
+        toast("报警")
     }
 
     fun getIRPic(width: Int, height: Int, fileName: String, ir_imageData: IR_ImageData, time: Long, isMaxWarn: Boolean, warnTemp: Float) {
@@ -665,7 +665,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         doAsync {
             val mBackEnv = GLES20BackEnv_VL(width, height)
             mBackEnv.setRenderer(GLFrameRenderer())
-            mBackEnv.setInput(App.yData, App.uData, App.vData, HcvisionUtil.width, HcvisionUtil.height, ir_imageData)
+            mBackEnv.setInput(App.vlData, HcvisionUtil.width, HcvisionUtil.height, ir_imageData)
             saveBitmap(fileName, mBackEnv.getBitmap(), time = time, isMaxWarn = isMaxWarn, warnTemp = warnTemp)
         }
     }
