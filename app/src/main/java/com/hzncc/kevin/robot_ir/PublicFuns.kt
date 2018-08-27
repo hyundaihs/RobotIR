@@ -27,7 +27,7 @@ import javax.microedition.khronos.opengles.GL10
  * Created by 蔡雨峰 on 2018/1/8.
  */
 
-val debug = false
+val debug = true
 
 fun Any.D(msg: String, tag: String = this.javaClass.simpleName) {
     if (debug)

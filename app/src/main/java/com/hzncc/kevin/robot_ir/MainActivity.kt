@@ -1,13 +1,18 @@
 package com.hzncc.kevin.robot_ir
 
 import android.content.*
-import android.graphics.*
-import android.media.MediaPlayer
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
 import android.widget.EditText
 import com.hzncc.kevin.robot_ir.App.Companion.isPeizhund
 import com.hzncc.kevin.robot_ir.App.Companion.param1
@@ -33,24 +38,26 @@ import com.hzncc.kevin.robot_ir.qi_han.QiHanConnectUtil
 import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer
-import com.hzncc.kevin.robot_ir.utils.*
-import com.hzsk.camera.CameraUtil
-import com.hzsk.camera.Device_w324_h256
+import com.hzncc.kevin.robot_ir.service.MonitorService
+import com.hzncc.kevin.robot_ir.service.MyService
+import com.hzncc.kevin.robot_ir.service.MyService.Companion.cameraUtil
+import com.hzncc.kevin.robot_ir.service.MyService.Companion.hcvisionUtil
+import com.hzncc.kevin.robot_ir.utils.FileUtil
+import com.hzncc.kevin.robot_ir.utils.HcvisionUtil
+import com.hzncc.kevin.robot_ir.utils.Preference
+import com.hzncc.kevin.robot_ir.utils.SDCardUtil
 import com.hzsk.camera.LeptonStatus
 import com.sp.peizhun.PeiZhunUtil
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import java.io.File
-import java.nio.ShortBuffer
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View) {
         handle = true
         when (v.id) {
-            R.id.openIR -> startIR()
-            R.id.openVL -> startVL()
             R.id.openWarn -> openWarn()
             R.id.max -> showPickers(true)
             R.id.min -> showPickers()
@@ -71,70 +78,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-
-    private fun openIR() {
-        cameraUtil.open(irIP, 50001)
-        cameraUtil.colorName = 9
+    private fun startService() {
+        startService(Intent(this, MyService::class.java))
+        startService(Intent(this, MonitorService::class.java))
     }
 
-    private fun startIR() {
-        if(!cameraUtil.isOpened){
-            openIR()
-        }
-        if (openIR.text == "开启红外") {
-            openIR.text = "开启中..."
-            cameraUtil.colorName = 9
-            cameraUtil.start()
-            openIR.text = "关闭红外"
-        } else if (openIR.text == "关闭红外") {
-            cameraUtil.stop()
-            openIR.text = "开启红外"
-        }
-    }
-
-
-    private fun openVL() {
-        if (!hcvisionUtil.isLogined()) {
-            if (!hcvisionUtil.login()) {
-                toast("Login failed")
-                return
-            }
-        }
-    }
-
-    private fun startVL() {
-        if(!hcvisionUtil.isLogined()){
-            openVL()
-        }
-        if (openVL.text == "开启可见光") {
-            openVL.text = "开启中..."
-            if (!hcvisionUtil.startPreview(hcRender)) {
-                E("startPreview failed")
-                return
-            }
-            openVL.text = "关闭可见光"
-        } else if (openVL.text == "关闭可见光") {
-            if (hcvisionUtil.isLogined() && HcvisionUtil.m_iPlayID >= 0) {
-                hcvisionUtil.stopPreview()
-            }
-            openVL.text = "开启可见光"
-        }
-    }
-
-    private fun closeIR() {
-        cameraUtil.close()
-        openIR.text = "开启红外"
-    }
-
-    private fun closeVL() {
-        hcvisionUtil.loginOut()
-        openVL.text = "开启可见光"
-    }
-
-    override fun onBackPressed() {
-        super.onBackPressed()
-        System.exit(0)
-    }
 
     private fun openWarn() {
         if (!isOpenWarn) {
@@ -179,42 +127,19 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         hcvisionUtil.loginOut()
         surfaceViewL.onPause()
         surfaceViewR.onPause()
-        mMediaPlayer?.release()
         super.onDestroy()
     }
-
 
     inner class MyBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == actionSaveBitmap) {
-//                val options = BitmapFactory.Options().apply {
-//                    inSampleSize = 4
-//                }
-                val warnTemp: Float = intent.getFloatExtra("temp", 0.0f)
                 irImage.setImageBitmap(
                         BitmapFactory.decodeFile(SDCardUtil.IMAGE_IR + App.instance.mData[0].irImage))
                 vlImage.setImageBitmap(
                         BitmapFactory.decodeFile(SDCardUtil.IMAGE_VL + App.instance.mData[0].vlImage))
-                warn()
-                doAsync {
-                    sendMessage(SDCardUtil.IMAGE_IR + App.instance.mData[0].irImage,
-                            SDCardUtil.IMAGE_VL + App.instance.mData[0].vlImage, warnTemp)
-                }
             }
         }
     }
-
-    fun sendMessage(ir: String, vl: String, temp: Float) {
-        val contacts = QiHanConnectUtil.getContactInfo(this)
-        QiHanConnectUtil.sendStringMessage2AllContact(this,
-                contacts, "有新的报警信息,异常温度:$temp℃", "")
-        val path = ArrayList<String>()
-        path.add(ir)
-        path.add(vl)
-        QiHanConnectUtil.sendPicture2AllContact(this, contacts, path)
-    }
-
-    var mMediaPlayer: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -223,29 +148,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         surfaceViewL.setEGLContextClientVersion(2)
         surfaceViewR.setEGLContextClientVersion(2)
-        if (isBitmapDraw) {
-            bitIrRender = GLBitmapRenderer(surfaceViewL)
-            surfaceViewL.setRenderer(bitIrRender)
-        } else {
-            irRender = GLRGBRenderer(surfaceViewL)
-            surfaceViewL.setRenderer(irRender)
-        }
+        bitIrRender = GLBitmapRenderer(surfaceViewL)
+        surfaceViewL.setRenderer(bitIrRender)
         surfaceViewL.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY)
         hcRender = GLFrameRenderer(surfaceViewR)
         surfaceViewR.setRenderer(hcRender)
         surfaceViewR.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY)
-        hcvisionUtil = HcvisionUtil()
-        if (hcvisionUtil.init()) {
-            E("init success")
-        } else {
-            E("init failed")
-        }
-        cameraUtil = CameraUtil(Device_w324_h256())
-
-        mMediaPlayer = MediaPlayer.create(this, R.raw.tts)
-
-        openThread()
-        initDatas()
 
         irImage.setOnClickListener {
             startActivity(Intent(this, GalleryActivity::class.java))
@@ -257,19 +165,17 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             showDialog()
         }
 
-        openIR()
-        openVL()
+        initDatas()
+        openThread()
+
+        startService()
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.KEYCODE_BACK){
-            home()
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
+    override fun onBackPressed() {
+        home()
     }
 
-    fun home(){
+    fun home() {
         val intent = Intent(Intent.ACTION_MAIN)
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addCategory(Intent.CATEGORY_HOME)
@@ -295,13 +201,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 }
                 irIP = irEdit.text.toString()
                 vlIP = vlEdit.text.toString()
-                closeVL()
-                closeIR()
-                openIR()
-                openVL()
+                startService()
             }
         })
-        dialog.setNegativeButton( "取消", object : DialogInterface.OnClickListener {
+        dialog.setNegativeButton("取消", object : DialogInterface.OnClickListener {
             override fun onClick(dialog: DialogInterface?, which: Int) {
                 toast("取消配置")
             }
@@ -355,7 +258,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                                 touchIr = 0
                             }
                         }
-                        D("irDownX = $irDownX irDownY = $irDownY pointIR1_x = $pointIR1_x pointIR1_y = $pointIR1_y touchIr = $touchIr")
                     }
                     MotionEvent.ACTION_MOVE -> {
                         val x = App.irWidth.toFloat() - event.rawX * (App.ir_imageData.width.toFloat() / w)
@@ -410,7 +312,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                                 touchVl = 0
                             }
                         }
-                        D("vlDownX = $vlDownX vlDownY = $vlDownY pointIR1_x = $pointVL1_x pointIR1_y = $pointVL1_y touchIr = $touchVl")
                     }
                     MotionEvent.ACTION_MOVE -> {
                         val x = App.irWidth.toFloat() - (event.rawX - surfaceViewL.width) * (App.irWidth.toFloat() / w)
@@ -457,22 +358,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private fun startPeizhun() {
         peizhun.text = "确定"
         isPeizhun = true
-        if (isBitmapDraw) {
-            bitIrRender.setPeizhun(isPeizhun)
-        } else {
-            irRender.setPeizhun(isPeizhun)
-        }
+        bitIrRender.setPeizhun(isPeizhun)
         hcRender.setPeizhun(isPeizhun)
     }
 
     private fun savePeizhun() {
         peizhun.text = "配准"
         isPeizhun = false
-        if (isBitmapDraw) {
-            bitIrRender.setPeizhun(isPeizhun)
-        } else {
-            irRender.setPeizhun(isPeizhun)
-        }
+        bitIrRender.setPeizhun(isPeizhun)
         hcRender.setPeizhun(isPeizhun)
 
         val pPointIR: DoubleArray = kotlin.DoubleArray(6)
@@ -550,13 +443,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var irRender: GLRGBRenderer
     private lateinit var bitIrRender: GLBitmapRenderer
     val broadcastReceiver: MyBroadcastReceiver = MyBroadcastReceiver()
-    lateinit var hcvisionUtil: HcvisionUtil
-    lateinit var cameraUtil: CameraUtil
-    private val isBitmapDraw = true
+
 
     companion object {
-        var irIP: String by Preference("ir_ip", "10.10.24.100")
-        var vlIP: String by Preference("vl_ip", "10.10.24.101")
+        var irIP: String by Preference("ir_ip", "10.217.39.201")
+        var vlIP: String by Preference("vl_ip", "10.217.39.200")
         var viewWidth = 0
         var viewHeight = 0
         var isRun = true
@@ -589,6 +480,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     fun openThread() {
         doAsync {
             while (isRun) {
+                MyService.viewWidth = surfaceViewL.width
+                MyService.viewHeight = surfaceViewL.height
                 if (cameraUtil.getStatus() == LeptonStatus.STATUS_RUNNING) {
                     if (startTime == 0L) {
                         startTime = System.currentTimeMillis()
@@ -600,104 +493,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                             cameraUtil.correct()
                         }
                     }
-                    App.ir_imageData = getNext(isBitmapDraw)
-                    if (isBitmapDraw) {
-                        bitIrRender.update(App.ir_imageData)
-                    } else {
-                        irRender.update(App.ir_imageData)
-                    }
-                    if (isWarn) {
-                        isWarn = false
-                        if (App.ir_imageData.max_temp >= maxWarn || App.ir_imageData.min_temp <= minWarn) {
-                            val calendarUtil = CalendarUtil()
-                            val time = calendarUtil.timeInMillis
-                            var isMaxWarn: Boolean
-                            var warnTemp: Float
-                            if (App.ir_imageData.max_temp >= maxWarn) {
-                                isMaxWarn = true
-                                warnTemp = App.ir_imageData.max_temp
-                            } else {
-                                isMaxWarn = false
-                                warnTemp = App.ir_imageData.min_temp
-                            }
-                            if (App.instance.mData.size > 0) {
-                                val oldTime = App.instance.mData[0].time
-                                if (time - oldTime < 60) {
-                                    val oldTemp = App.instance.mData[0].warnTemp
-                                    if (isMaxWarn == App.instance.mData[0].isMaxWarn) {
-                                        if (isMaxWarn && Math.abs(App.ir_imageData.max_temp - oldTemp) <= 0.2) {
-                                            continue
-                                        } else if (!isMaxWarn && Math.abs(App.ir_imageData.min_temp - oldTemp) <= 0.2) {
-                                            continue
-                                        }
-                                    }
-                                }
-                            }
-                            val fileName = "${calendarUtil.format(CalendarUtil.FILENAME)}.jpeg"
-                            getIRPic(surfaceViewL.width, surfaceViewL.height, fileName, App.ir_imageData, time, isMaxWarn, warnTemp)
-                            getVLPic(surfaceViewR.width, surfaceViewR.height, fileName, App.ir_imageData, time, isMaxWarn, warnTemp)
-                        }
+                    bitIrRender.update(App.ir_imageData)
+                    hcRender.update(HcvisionUtil.width, HcvisionUtil.height)
+                    if (MyService.hcvisionUtil.dataCacheUtil != null) {
+                        hcRender.update(MyService.hcvisionUtil.dataCacheUtil!!.read(), App.ir_imageData)
                     }
                 }
             }
         }
     }
 
-    fun warn() {
-        mMediaPlayer?.start()
-        toast("报警")
-    }
-
-    fun getIRPic(width: Int, height: Int, fileName: String, ir_imageData: IR_ImageData, time: Long, isMaxWarn: Boolean, warnTemp: Float) {
-        doAsync {
-            val mBackEnv = GLES20BackEnv_IR(width, height)
-            if (isBitmapDraw) {
-                mBackEnv.setRenderer(GLBitmapRenderer())
-            } else {
-                mBackEnv.setRenderer(GLRGBRenderer())
-            }
-            mBackEnv.setInput(ir_imageData)
-            saveBitmap(fileName, mBackEnv.getBitmap(), true, time, isMaxWarn, warnTemp)
-        }
-    }
-
-    fun getVLPic(width: Int, height: Int, fileName: String, ir_imageData: IR_ImageData, time: Long, isMaxWarn: Boolean, warnTemp: Float) {
-        doAsync {
-            val mBackEnv = GLES20BackEnv_VL(width, height)
-            mBackEnv.setRenderer(GLFrameRenderer())
-            mBackEnv.setInput(App.vlData, HcvisionUtil.width, HcvisionUtil.height, ir_imageData)
-            saveBitmap(fileName, mBackEnv.getBitmap(), time = time, isMaxWarn = isMaxWarn, warnTemp = warnTemp)
-        }
-    }
-
-    private fun getNext(is8byte: Boolean = false): IR_ImageData {
-        val ir_ImageData = IR_ImageData()
-        val raw = ShortArray(cameraUtil.deviceInfo.raw_length)
-        cameraUtil.nextFrame(raw)
-        if (is8byte) {
-            val bmp = ByteArray(cameraUtil.deviceInfo.bmp_length)
-            cameraUtil.img_14To8(raw, bmp)
-            val options = BitmapFactory.Options()
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888
-            val bitmap = BitmapFactory.decodeByteArray(bmp, 0, bmp.size, options)
-            ir_ImageData.bitmap = bitmap
-        } else {
-            val bmp = ShortArray(cameraUtil.deviceInfo.raw_length)
-            cameraUtil.img_14To565(raw, bmp)
-            ir_ImageData.buffer = ShortBuffer.wrap(bmp)
-        }
-        ir_ImageData.width = cameraUtil.deviceInfo.width
-        ir_ImageData.height = cameraUtil.deviceInfo.height
-        App.irWidth = cameraUtil.deviceInfo.width
-        App.irHeight = cameraUtil.deviceInfo.height
-        ir_ImageData.max_x = cameraUtil.maxX
-        ir_ImageData.max_y = cameraUtil.maxY
-        ir_ImageData.min_x = cameraUtil.minX
-        ir_ImageData.min_y = cameraUtil.minY
-        ir_ImageData.max_temp = cameraUtil.maxTemp + correctTemp
-        ir_ImageData.min_temp = cameraUtil.minTemp + correctTemp
-        return ir_ImageData
-    }
 
     private fun drawCross(canvas: Canvas, ir_imageData: IR_ImageData) {
         val maxStr = "Max:${ir_imageData.max_temp}"

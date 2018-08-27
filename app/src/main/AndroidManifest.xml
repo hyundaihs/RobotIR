@@ -2,12 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hzncc.kevin.robot_ir">
 
+    <permission
+        android:name="com.hzncc.kevin.robot_ir.permission"
+        android:protectionLevel="normal" />
     <!-- 网络权限 -->
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.hzncc.kevin.robot_ir.permission"/>
 
-    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
 
     <application
         android:name="com.hzncc.kevin.robot_ir.App"
@@ -17,7 +23,8 @@
         android:roundIcon="@mipmap/logo"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.hzncc.kevin.robot_ir.MainActivity"
+        <activity
+            android:name="com.hzncc.kevin.robot_ir.MainActivity"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,9 +32,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.hzncc.kevin.robot_ir.GalleryActivity"
-            android:screenOrientation="landscape"/>
+        <activity
+            android:name="com.hzncc.kevin.robot_ir.GalleryActivity"
+            android:screenOrientation="landscape" />
         <activity android:name=".CircleSelectorActivity" />
+
+        <service android:name=".service.MyService" />
+        <service android:name=".service.MonitorService" />
+        <service android:name=".service.WarningService" />
+
+        <receiver
+            android:name=".MyReceiver"
+            android:permission="com.hzncc.kevin.robot_ir.permission">
+            <intent-filter>
+                <action android:name="ACTION_SAVE_BITMAP" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

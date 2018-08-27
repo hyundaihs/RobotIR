@@ -63,11 +63,11 @@ class App : Application() {
                 )
                 .callback(object : PermissionListener {
                     override fun onSucceed(requestCode: Int, grantPermissions: MutableList<String>) {
-                        toast("权限设置成功")
+//                        toast("权限设置成功")
                     }
 
                     override fun onFailed(requestCode: Int, deniedPermissions: MutableList<String>) {
-                        toast("权限设置失败")
+                        toast("权限获取失败")
                     }
                 }).start()
     }
@@ -75,7 +75,7 @@ class App : Application() {
     companion object {
         // 伴生对象
         lateinit var instance: App
-        lateinit var ir_imageData: IR_ImageData
+        var ir_imageData = IR_ImageData()
         lateinit var vlData: ByteArray
 
         var isPeizhund: Boolean by Preference("isPeizhund", false)

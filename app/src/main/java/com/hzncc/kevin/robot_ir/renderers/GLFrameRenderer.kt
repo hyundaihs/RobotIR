@@ -90,6 +90,7 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
     private var maxBitmap: Bitmap? = null
     private var minBitmap: Bitmap? = null
     private var mTriangle: Triangle = Triangle()
+    public var isInitBuffer = false
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         // 设置清屏颜色为黑色
@@ -136,17 +137,20 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
      * the video size changes.
      */
     fun update(w: Int, h: Int) {
-        synchronized(this) {
-            if (w > 0 && h > 0) {
-                if (w != mVideoWidth && h != mVideoHeight) {
-                    this.mVideoWidth = w
-                    this.mVideoHeight = h
-                    val yarraySize = w * h
-                    val uvarraySize = yarraySize / 4
-                    synchronized(this) {
-                        y = ByteBuffer.allocate(yarraySize)
-                        u = ByteBuffer.allocate(uvarraySize)
-                        v = ByteBuffer.allocate(uvarraySize)
+        if (!isInitBuffer) {
+            synchronized(this) {
+                if (w > 0 && h > 0) {
+                    if (w != mVideoWidth && h != mVideoHeight) {
+                        this.mVideoWidth = w
+                        this.mVideoHeight = h
+                        val yarraySize = w * h
+                        val uvarraySize = yarraySize / 4
+                        synchronized(this) {
+                            y = ByteBuffer.allocate(yarraySize)
+                            u = ByteBuffer.allocate(uvarraySize)
+                            v = ByteBuffer.allocate(uvarraySize)
+                            isInitBuffer = true
+                        }
                     }
                 }
             }
@@ -157,18 +161,20 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
      * this method will be called from native code, it's used for passing yuv data to me.
      */
     fun update(data: ByteArray, ir_ImageData: IR_ImageData) {
-        synchronized(this) {
-            y!!.clear()
-            u!!.clear()
-            v!!.clear()
-            y!!.put(data, 0, HcvisionUtil.width * HcvisionUtil.height)
-            v!!.put(data, HcvisionUtil.width * HcvisionUtil.height,
-                    HcvisionUtil.width * HcvisionUtil.height / 4)
-            u!!.put(data, HcvisionUtil.width * HcvisionUtil.height +
-                    HcvisionUtil.width * HcvisionUtil.height / 4, HcvisionUtil.width * HcvisionUtil.height / 4)
-            update(ir_ImageData)
-        }
+        if (isInitBuffer) {
+            synchronized(this) {
+                y!!.clear()
+                u!!.clear()
+                v!!.clear()
+                y!!.put(data, 0, HcvisionUtil.width * HcvisionUtil.height)
+                v!!.put(data, HcvisionUtil.width * HcvisionUtil.height,
+                        HcvisionUtil.width * HcvisionUtil.height / 4)
+                u!!.put(data, HcvisionUtil.width * HcvisionUtil.height +
+                        HcvisionUtil.width * HcvisionUtil.height / 4, HcvisionUtil.width * HcvisionUtil.height / 4)
+                update(ir_ImageData)
+            }
 
-        mTargetSurface?.requestRender()
+            mTargetSurface?.requestRender()
+        }
     }
 }
