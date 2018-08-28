@@ -92,7 +92,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private var maxWarn by Preference("max_warn", 0)
     private var minWarn by Preference("min_warn", 0)
-    private var is324 by Preference("is324", 0)
     private var correctTemp: Float by Preference("correct_temp", 0.0f)
     private var isWarn by Preference("isWarn", 0)
     private var isPeizhun = false
@@ -103,6 +102,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var touchIr = 0
     private var touchVl = 0
     private var touchSpace = 20
+    private var isShowCorr = false
+    private var isClick = false
 
     override fun onPause() {
         super.onPause()
@@ -158,12 +159,35 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             showDialog()
         }
 
-        openWarn.text = if(isWarn == 0) "开启报警" else "关闭报警"
+        surfaceViewL.setOnClickListener {
+            if (!isClick) {
+                isClick = true
+                count()
+            } else {
+                isShowCorr = !isShowCorr
+                correctLayout(isShowCorr)
+                isClick = false
+            }
+        }
+
+        openWarn.text = if (isWarn == 0) "开启报警" else "关闭报警"
 
         initDatas()
         openThreadL()
         openThreadR()
         startService()
+    }
+
+    fun count() {
+        doAsync {
+            Thread.sleep(1000)
+            isClick = false
+        }
+    }
+
+    fun correctLayout(show: Boolean) {
+        correct.visibility = if (show) View.VISIBLE else View.GONE
+        wbLine.visibility = if (show) View.VISIBLE else View.GONE
     }
 
     override fun onBackPressed() {
