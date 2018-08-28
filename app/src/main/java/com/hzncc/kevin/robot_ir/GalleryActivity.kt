@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.support.v4.view.PagerAdapter
+import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
@@ -33,7 +34,8 @@ class GalleryActivity : AppCompatActivity() {
     inner class MyBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == actionSaveBitmap) {
-                viewPager.adapter = MyAdapter(context, App.instance.mData)
+//                viewPager.adapter = MyAdapter(context, App.instance.mData)
+                viewPager.adapter.notifyDataSetChanged()
                 viewPager.setCurrentItem(index)
             }
         }
@@ -57,9 +59,19 @@ class GalleryActivity : AppCompatActivity() {
         setContentView(R.layout.activity_gallery)
         window.setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        index = intent.getIntExtra("index", 0)
         viewPager.adapter = MyAdapter(this, App.instance.mData)
-        viewPager.setCurrentItem(index)
+        viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+            override fun onPageScrollStateChanged(state: Int) {
+            }
+
+            override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+            }
+
+            override fun onPageSelected(position: Int) {
+                index = position
+            }
+
+        })
     }
 
     private class MyAdapter(val context: Context, val mData: ArrayList<Log_Data>) : PagerAdapter() {

@@ -1,22 +1,23 @@
 package com.hzncc.kevin.robot_ir.service
 
 import android.app.Service
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.MediaPlayer
 import android.os.IBinder
-import com.hzncc.kevin.robot_ir.*
+import com.hzncc.kevin.frareddemo.ir_sdk.CameraUtil
+import com.hzncc.kevin.frareddemo.ir_sdk.Device_w324_h256
+import com.hzncc.kevin.frareddemo.ir_sdk.Device_w336_h256
+import com.hzncc.kevin.frareddemo.ir_sdk.LeptonStatus
+import com.hzncc.kevin.robot_ir.App
+import com.hzncc.kevin.robot_ir.E
+import com.hzncc.kevin.robot_ir.MainActivity
+import com.hzncc.kevin.robot_ir.MainActivity.Companion.irIP
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
-import com.hzncc.kevin.robot_ir.qi_han.QiHanConnectUtil
 import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
+import com.hzncc.kevin.robot_ir.saveBitmap
 import com.hzncc.kevin.robot_ir.utils.*
-import com.hzsk.camera.CameraUtil
-import com.hzsk.camera.Device_w324_h256
-import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 
@@ -29,10 +30,13 @@ class MyService : Service() {
     private var correctTemp: Float by Preference("correct_temp", 0.0f)
     private var maxWarn by Preference("max_warn", 0)
     private var minWarn by Preference("min_warn", 0)
+    private var isWarn by Preference("isWarn", 0)
+    //    private var is324 by Preference("is324", 336)
+    var cameraUtil = if (irIP == "10.217.39.201") CameraUtil(Device_w324_h256())
+    else CameraUtil(Device_w336_h256())
 
     companion object {
         var isRuning = false
-        var cameraUtil = CameraUtil(Device_w324_h256())
         var hcvisionUtil = HcvisionUtil()
         var viewWidth = 0
         var viewHeight = 0
@@ -48,62 +52,90 @@ class MyService : Service() {
             E("init failed")
         }
         isRuning = true
-
         getNextFrame()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        cameraUtil = if (irIP == "10.217.39.201") CameraUtil(Device_w324_h256())
+        else CameraUtil(Device_w336_h256())
         doAsync {
             if (isRuning) {
-                stopIR()
-                closeIR()
                 stopVL()
                 closeVL()
+                stopIR()
+                closeIR()
                 Thread.sleep(1000)
             }
             openIR()
-            openVL()
             startIR()
+            openVL()
             startVL()
         }
         return super.onStartCommand(intent, flags, startId)
     }
 
+    var startTime: Long = 0
+    var currTime: Long = 0
+    var timeCounter = true
+
+    fun countTime() {
+        timeCounter = false
+        doAsync {
+            Thread.sleep(10000)
+            timeCounter = true
+        }
+    }
+
+
     private fun getNextFrame() {
         doAsync {
+            Thread.sleep(2000)
             while (isRuning) {
-                E("service is run")
-                App.ir_imageData = getNext()
-                if (MainActivity.isWarn) {
-                    MainActivity.isWarn = false
-                    if (App.ir_imageData.max_temp >= maxWarn || App.ir_imageData.min_temp <= minWarn) {
-                        val calendarUtil = CalendarUtil()
-                        val time = calendarUtil.timeInMillis
-                        var isMaxWarn: Boolean
-                        var warnTemp: Float
-                        if (App.ir_imageData.max_temp >= maxWarn) {
-                            isMaxWarn = true
-                            warnTemp = App.ir_imageData.max_temp
-                        } else {
-                            isMaxWarn = false
-                            warnTemp = App.ir_imageData.min_temp
+                if (cameraUtil.isOpened && cameraUtil.status == LeptonStatus.STATUS_RUNNING) {
+                    App.ir_imageData = getNext()
+                    if (startTime == 0L) {
+                        startTime = System.currentTimeMillis()
+                    } else {
+                        currTime = System.currentTimeMillis()
+                        val off = currTime - startTime
+                        if (off >= 600000) {
+                            startTime = currTime
+                            cameraUtil.correct()
                         }
-                        if (App.instance.mData.size > 0) {
-                            val oldTime = App.instance.mData[0].time
-                            if (time - oldTime < 60) {
-                                val oldTemp = App.instance.mData[0].warnTemp
-                                if (isMaxWarn == App.instance.mData[0].isMaxWarn) {
-                                    if (isMaxWarn && Math.abs(App.ir_imageData.max_temp - oldTemp) <= 0.2) {
-                                        continue
-                                    } else if (!isMaxWarn && Math.abs(App.ir_imageData.min_temp - oldTemp) <= 0.2) {
-                                        continue
+                    }
+                    if (isWarn == 1) {
+                        if (timeCounter) {
+                            countTime()
+                            if (App.ir_imageData.max_temp >= maxWarn || App.ir_imageData.min_temp <= minWarn) {
+                                val calendarUtil = CalendarUtil()
+                                val time = calendarUtil.timeInMillis
+                                var isMaxWarn: Boolean
+                                var warnTemp: Float
+                                if (App.ir_imageData.max_temp >= maxWarn) {
+                                    isMaxWarn = true
+                                    warnTemp = App.ir_imageData.max_temp
+                                } else {
+                                    isMaxWarn = false
+                                    warnTemp = App.ir_imageData.min_temp
+                                }
+                                if (App.instance.mData.size > 0) {
+                                    val oldTime = App.instance.mData[0].time
+                                    if (time - oldTime < 60) {
+                                        val oldTemp = App.instance.mData[0].warnTemp
+                                        if (isMaxWarn == App.instance.mData[0].isMaxWarn) {
+                                            if (isMaxWarn && Math.abs(App.ir_imageData.max_temp - oldTemp) <= 0.2) {
+                                                continue
+                                            } else if (!isMaxWarn && Math.abs(App.ir_imageData.min_temp - oldTemp) <= 0.2) {
+                                                continue
+                                            }
+                                        }
                                     }
                                 }
+                                val fileName = "${calendarUtil.format(CalendarUtil.FILENAME)}.jpeg"
+                                getIRPic(viewWidth, viewHeight, fileName, App.ir_imageData, time, isMaxWarn, warnTemp)
+                                getVLPic(viewWidth, viewHeight, fileName, App.ir_imageData, time, isMaxWarn, warnTemp)
                             }
                         }
-                        val fileName = "${calendarUtil.format(CalendarUtil.FILENAME)}.jpeg"
-                        getIRPic(viewWidth, viewHeight, fileName, App.ir_imageData, time, isMaxWarn, warnTemp)
-                        getVLPic(viewWidth, viewHeight, fileName, App.ir_imageData, time, isMaxWarn, warnTemp)
                     }
                 }
             }
@@ -162,14 +194,14 @@ class MyService : Service() {
 
     private fun openIR() {
         cameraUtil.open(MainActivity.irIP, 50001)
-        cameraUtil.colorName = 9
+        cameraUtil.setColorName(9)
     }
 
     private fun startIR() {
         if (!cameraUtil.isOpened) {
             openIR()
         }
-        cameraUtil.colorName = 9
+        cameraUtil.setColorName(9)
         cameraUtil.start()
 
     }

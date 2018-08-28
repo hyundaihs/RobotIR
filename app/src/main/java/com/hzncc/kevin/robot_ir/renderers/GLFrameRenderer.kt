@@ -16,8 +16,6 @@ import com.hzncc.kevin.robot_ir.initFontBitmap
 import com.hzncc.kevin.robot_ir.textures.TextBitmap
 import com.hzncc.kevin.robot_ir.textures.TextureYuv
 import com.hzncc.kevin.robot_ir.textures.Triangle
-import com.hzncc.kevin.robot_ir.utils.HcvisionUtil
-import java.nio.ByteBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -84,13 +82,10 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
     private var minTexBitmap = TextBitmap()
     private var mVideoWidth = -1
     private var mVideoHeight = -1
-    private var y: ByteBuffer? = null
-    private var u: ByteBuffer? = null
-    private var v: ByteBuffer? = null
     private var maxBitmap: Bitmap? = null
     private var minBitmap: Bitmap? = null
     private var mTriangle: Triangle = Triangle()
-    public var isInitBuffer = false
+    private var myData: ByteArray? = null
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         // 设置清屏颜色为黑色
@@ -110,12 +105,9 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
 
     override fun onDrawFrame(gl: GL10) {
         synchronized(this) {
-            if (y != null) {
+            if (myData != null) {
                 // reset position, have to be done
-                y!!.position(0)
-                u!!.position(0)
-                v!!.position(0)
-                prog.buildTextures(y!!, u!!, v!!, mVideoWidth, mVideoHeight)
+                prog.buildTextures(myData!!, mVideoWidth, mVideoHeight)
                 if (null != maxBitmap && !maxBitmap!!.isRecycled) {
                     maxTexBitmap.buildTextures(maxBitmap!!)
                 }
@@ -137,21 +129,11 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
      * the video size changes.
      */
     fun update(w: Int, h: Int) {
-        if (!isInitBuffer) {
-            synchronized(this) {
-                if (w > 0 && h > 0) {
-                    if (w != mVideoWidth && h != mVideoHeight) {
-                        this.mVideoWidth = w
-                        this.mVideoHeight = h
-                        val yarraySize = w * h
-                        val uvarraySize = yarraySize / 4
-                        synchronized(this) {
-                            y = ByteBuffer.allocate(yarraySize)
-                            u = ByteBuffer.allocate(uvarraySize)
-                            v = ByteBuffer.allocate(uvarraySize)
-                            isInitBuffer = true
-                        }
-                    }
+        synchronized(this) {
+            if (w > 0 && h > 0) {
+                if (w != mVideoWidth && h != mVideoHeight) {
+                    this.mVideoWidth = w
+                    this.mVideoHeight = h
                 }
             }
         }
@@ -161,20 +143,10 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
      * this method will be called from native code, it's used for passing yuv data to me.
      */
     fun update(data: ByteArray, ir_ImageData: IR_ImageData) {
-        if (isInitBuffer) {
-            synchronized(this) {
-                y!!.clear()
-                u!!.clear()
-                v!!.clear()
-                y!!.put(data, 0, HcvisionUtil.width * HcvisionUtil.height)
-                v!!.put(data, HcvisionUtil.width * HcvisionUtil.height,
-                        HcvisionUtil.width * HcvisionUtil.height / 4)
-                u!!.put(data, HcvisionUtil.width * HcvisionUtil.height +
-                        HcvisionUtil.width * HcvisionUtil.height / 4, HcvisionUtil.width * HcvisionUtil.height / 4)
-                update(ir_ImageData)
-            }
-
-            mTargetSurface?.requestRender()
+        synchronized(this) {
+            myData = data
+            update(ir_ImageData)
         }
+        mTargetSurface?.requestRender()
     }
 }

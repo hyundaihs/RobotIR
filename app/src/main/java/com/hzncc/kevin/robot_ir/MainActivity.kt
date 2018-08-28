@@ -34,19 +34,15 @@ import com.hzncc.kevin.robot_ir.App.Companion.pointVL2_y
 import com.hzncc.kevin.robot_ir.App.Companion.pointVL3_x
 import com.hzncc.kevin.robot_ir.App.Companion.pointVL3_y
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
-import com.hzncc.kevin.robot_ir.qi_han.QiHanConnectUtil
 import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer
 import com.hzncc.kevin.robot_ir.service.MonitorService
 import com.hzncc.kevin.robot_ir.service.MyService
-import com.hzncc.kevin.robot_ir.service.MyService.Companion.cameraUtil
-import com.hzncc.kevin.robot_ir.service.MyService.Companion.hcvisionUtil
 import com.hzncc.kevin.robot_ir.utils.FileUtil
 import com.hzncc.kevin.robot_ir.utils.HcvisionUtil
 import com.hzncc.kevin.robot_ir.utils.Preference
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
-import com.hzsk.camera.LeptonStatus
 import com.sp.peizhun.PeiZhunUtil
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
@@ -85,20 +81,20 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
 
     private fun openWarn() {
-        if (!isOpenWarn) {
+        if (isWarn == 0) {
             openWarn.text = "关闭报警"
-            isOpenWarn = true
-            openWarnCount()
+            isWarn = 1
         } else {
             openWarn.text = "开启报警"
-            isOpenWarn = false
+            isWarn = 0
         }
     }
 
     private var maxWarn by Preference("max_warn", 0)
     private var minWarn by Preference("min_warn", 0)
+    private var is324 by Preference("is324", 0)
     private var correctTemp: Float by Preference("correct_temp", 0.0f)
-
+    private var isWarn by Preference("isWarn", 0)
     private var isPeizhun = false
     private var irDownX = 0f
     private var irDownY = 0f
@@ -122,9 +118,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onDestroy() {
         closeThread()
-        cameraUtil.close()
-        hcvisionUtil.stopPreview()
-        hcvisionUtil.loginOut()
         surfaceViewL.onPause()
         surfaceViewR.onPause()
         super.onDestroy()
@@ -165,9 +158,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             showDialog()
         }
 
-        initDatas()
-        openThread()
+        openWarn.text = if(isWarn == 0) "开启报警" else "关闭报警"
 
+        initDatas()
+        openThreadL()
+        openThreadR()
         startService()
     }
 
@@ -346,15 +341,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    fun openWarnCount() {
-        doAsync {
-            while (isOpenWarn) {
-                isWarn = true
-                Thread.sleep(10000)
-            }
-        }
-    }
-
     private fun startPeizhun() {
         peizhun.text = "确定"
         isPeizhun = true
@@ -392,9 +378,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         param5 = pDbAffPara[4].toFloat()
         param6 = pDbAffPara[5].toFloat()
         isPeizhund = true
-        for (i in 0 until 6) {
-            D("pDbAffPara[$i] = ${pDbAffPara[i]}")
-        }
     }
 
 
@@ -446,7 +429,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
 
     companion object {
-        var irIP: String by Preference("ir_ip", "10.217.39.201")
+        var irIP: String by Preference("ir_ip", "10.217.39.201")//202为336
         var vlIP: String by Preference("vl_ip", "10.217.39.200")
         var viewWidth = 0
         var viewHeight = 0
@@ -460,8 +443,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         var rateH = 0f
 
         var hcRenderSet = false
-        var isOpenWarn = false
-        var isWarn = false
         var handle = false // 右边按钮弹出后是否被操作
         var warning = false //是否正在报警
 
@@ -474,30 +455,25 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    var startTime: Long = 0
-    var currTime: Long = 0
 
-    fun openThread() {
+    fun openThreadL() {
         doAsync {
             while (isRun) {
                 MyService.viewWidth = surfaceViewL.width
                 MyService.viewHeight = surfaceViewL.height
-                if (cameraUtil.getStatus() == LeptonStatus.STATUS_RUNNING) {
-                    if (startTime == 0L) {
-                        startTime = System.currentTimeMillis()
-                    } else {
-                        currTime = System.currentTimeMillis()
-                        val off = currTime - startTime
-                        if (off >= 600000) {
-                            startTime = currTime
-                            cameraUtil.correct()
-                        }
-                    }
-                    bitIrRender.update(App.ir_imageData)
+                bitIrRender.update(App.ir_imageData)
+            }
+        }
+    }
+
+    fun openThreadR() {
+        doAsync {
+            while (isRun) {
+                MyService.viewWidth = surfaceViewR.width
+                MyService.viewHeight = surfaceViewR.height
+                if (null != App.vlData) {
                     hcRender.update(HcvisionUtil.width, HcvisionUtil.height)
-                    if (MyService.hcvisionUtil.dataCacheUtil != null) {
-                        hcRender.update(MyService.hcvisionUtil.dataCacheUtil!!.read(), App.ir_imageData)
-                    }
+                    hcRender.update(App.vlData!!, App.ir_imageData)
                 }
             }
         }

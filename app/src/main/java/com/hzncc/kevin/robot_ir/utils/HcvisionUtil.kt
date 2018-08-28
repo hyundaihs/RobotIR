@@ -34,7 +34,7 @@ class HcvisionUtil {
         var height = 0
     }
 
-    var dataCacheUtil: DataCacheUtil? = null
+//    var dataCacheUtil: DataCacheUtil? = null
 
 
     fun init(): Boolean {
@@ -90,7 +90,7 @@ class HcvisionUtil {
         if (m_iPlayID < 0) {
             val previewInfo = com.hikvision.netsdk.NET_DVR_PREVIEWINFO()
             previewInfo.lChannel = 1
-            previewInfo.dwStreamType = 0 // 码流类型:0-主码流，1-子码流，2-码流 3，3-虚拟码流，以此类推
+            previewInfo.dwStreamType = 1 // 码流类型:0-主码流，1-子码流，2-码流 3，3-虚拟码流，以此类推
             previewInfo.dwLinkMode = 1 //连接方式:0- TCP 方式，1- UDP 方式，2- 多播方式，3- RTP 方式，4-RTP/RTSP，5-RSTP/HTTP
             previewInfo.bBlocked = 0 //0- 非阻塞取流，1- 阻塞取流
             previewInfo.bPassbackRecord = 0 //0-不启用录像回传，1-启用录像回传。ANR 断网补录功能，客户端和设备之间网络异常恢复之后自动将前端数据同步过来，需要设备支持。
@@ -155,19 +155,15 @@ class HcvisionUtil {
                 if (!Player.getInstance().setDecodeCB(m_iPort, PlayerCallBack.PlayerDecodeCB { //
                             nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
                             ->
-                            if (dataCacheUtil == null) {
-                                dataCacheUtil = DataCacheUtil(nDataLen)
-                            }
-                            dataCacheUtil?.put(data)
                             App.vlData = data
                             width = nWidth
                             height = nHeight
                             MainActivity.hcRenderSet = true
                         })) {
                 }
-                if (!Player.getInstance().setDisplayBuf(m_iPort, 15)) {
-                    return
-                }
+//                if (!Player.getInstance().setDisplayBuf(m_iPort, 15)) {
+//                    return
+//                }
 
                 if (!Player.getInstance().play(m_iPort, null)) {
                     return

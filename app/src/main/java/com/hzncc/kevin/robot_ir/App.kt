@@ -76,7 +76,7 @@ class App : Application() {
         // 伴生对象
         lateinit var instance: App
         var ir_imageData = IR_ImageData()
-        lateinit var vlData: ByteArray
+        var vlData: ByteArray? = null
 
         var isPeizhund: Boolean by Preference("isPeizhund", false)
 

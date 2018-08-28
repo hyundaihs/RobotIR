@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/RobotIR.iml" filepath="$PROJECT_DIR$/RobotIR.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/circleselector/circleselector.iml" filepath="$PROJECT_DIR$/circleselector/circleselector.iml" />
+      <module fileurl="file://$PROJECT_DIR$/frared/frared.iml" filepath="$PROJECT_DIR$/frared/frared.iml" />
     </modules>
   </component>
 </project>

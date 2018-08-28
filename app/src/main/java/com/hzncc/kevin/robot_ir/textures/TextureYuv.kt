@@ -1,14 +1,9 @@
 package com.hzncc.kevin.robot_ir.textures
 
-import android.content.Context
 import android.opengl.GLES20
 import android.util.Log
-import com.hzncc.kevin.robot_ir.App
-import com.hzncc.kevin.robot_ir.R
-import com.hzncc.kevin.robot_ir.getByteBuffer
-import com.hzncc.kevin.robot_ir.loadShader
+import com.hzncc.kevin.robot_ir.*
 import com.hzncc.kevin.robot_ir.utils.TextResourceReader
-import java.nio.Buffer
 import java.nio.ByteBuffer
 
 /**
@@ -36,6 +31,7 @@ class TextureYuv {
     private var _tIindex: Int = 0
     private var _tIIindex: Int = 1
     private var _tIIIindex: Int = 2
+    private var dataBuffer: ByteBuffer? = null
 
     fun buildProgram() {
         _vertice_buffer = getByteBuffer(squareVertices)
@@ -93,14 +89,19 @@ class TextureYuv {
     /**
      * build a set of textures, one for Y, one for U, and one for V.
      */
-    fun buildTextures(y: Buffer, u: Buffer, v: Buffer, width: Int, height: Int) {
+    fun buildTextures(myData: ByteArray, width: Int, height: Int) {
         val videoSizeChanged = width != _video_width || height != _video_height
         if (videoSizeChanged) {
             _video_width = width
             _video_height = height
             Log.d("tag", "buildTextures videoSizeChanged: w=$_video_width h=$_video_height")
         }
-
+        val yarraySize = _video_width * _video_height
+        val uvarraySize = yarraySize / 4
+        dataBuffer = ByteBuffer.allocate(yarraySize + uvarraySize * 2)
+//        dataBuffer!!.flip()
+        dataBuffer!!.put(myData)
+        dataBuffer!!.clear()
         // building texture for Y data
         if (_ytid < 0 || videoSizeChanged) {
             if (_ytid >= 0) {
@@ -117,32 +118,16 @@ class TextureYuv {
         }
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _ytid)
         checkGlError("glBindTexture")
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, _video_width, _video_height, 0,
-                GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, y)
+        dataBuffer!!.position(0)
+        dataBuffer!!.limit(yarraySize)
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE,
+                _video_width, _video_height, 0,
+                GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, dataBuffer)
         checkGlError("glTexImage2D")
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST.toFloat())
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
-
-        // building texture for U data
-        if (_utid < 0 || videoSizeChanged) {
-            if (_utid >= 0) {
-                Log.d("tag", "glDeleteTextures U")
-                GLES20.glDeleteTextures(1, intArrayOf(_utid), 0)
-                checkGlError("glDeleteTextures")
-            }
-            val textures = IntArray(1)
-            GLES20.glGenTextures(1, textures, 0)
-            checkGlError("glGenTextures")
-            _utid = textures[0]
-            Log.d("tag", "glGenTextures U = " + _utid)
-        }
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _utid)
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, _video_width / 2, _video_height / 2, 0,
-                GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, u)
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST.toFloat())
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
+                GLES20.GL_NEAREST.toFloat())
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
+                GLES20.GL_LINEAR.toFloat())
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
@@ -160,10 +145,43 @@ class TextureYuv {
             Log.d("tag", "glGenTextures V = " + _vtid)
         }
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _vtid)
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, _video_width / 2, _video_height / 2, 0,
-                GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, v)
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST.toFloat())
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
+        dataBuffer!!.clear()
+        dataBuffer!!.position(yarraySize)
+        dataBuffer!!.limit(yarraySize + uvarraySize)
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE,
+                _video_width / 2, _video_height / 2, 0,
+                GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, dataBuffer)
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
+                GLES20.GL_NEAREST.toFloat())
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
+                GLES20.GL_LINEAR.toFloat())
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+
+        // building texture for U data
+        if (_utid < 0 || videoSizeChanged) {
+            if (_utid >= 0) {
+                Log.d("tag", "glDeleteTextures U")
+                GLES20.glDeleteTextures(1, intArrayOf(_utid), 0)
+                checkGlError("glDeleteTextures")
+            }
+            val textures = IntArray(1)
+            GLES20.glGenTextures(1, textures, 0)
+            checkGlError("glGenTextures")
+            _utid = textures[0]
+            Log.d("tag", "glGenTextures U = " + _utid)
+        }
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _utid)
+        dataBuffer!!.clear()
+        dataBuffer!!.position(yarraySize + uvarraySize)
+        dataBuffer!!.limit(yarraySize + uvarraySize * 2)
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE,
+                _video_width / 2, _video_height / 2, 0,
+                GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, dataBuffer)
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
+                GLES20.GL_NEAREST.toFloat())
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
+                GLES20.GL_LINEAR.toFloat())
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
     }

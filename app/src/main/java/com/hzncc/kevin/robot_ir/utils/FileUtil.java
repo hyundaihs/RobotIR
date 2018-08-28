@@ -155,7 +155,7 @@ public class FileUtil {
                     String fileName = file.getName();
                     if (fileName.endsWith("." + dix)) {
                         if (new File(SDCardUtil.IMAGE_VL + fileName).exists()) {
-                            strs.add(new Log_Data(fileName, fileName, 0, false, 0));
+                            strs.add(new Log_Data(fileName, fileName, 0L, false, 0f));
                         }
                     }
                 }

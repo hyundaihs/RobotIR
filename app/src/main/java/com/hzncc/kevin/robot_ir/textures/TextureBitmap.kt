@@ -175,7 +175,8 @@ class TextureBitmap(val isFanz: Boolean = true) {
 
         private val coordVertices = floatArrayOf(0.0f, rBold, 1.0f, rBold, 0.0f, lBold, 1.0f, lBold)// whole-texture
 
-        private val coordVertices_fz = floatArrayOf(1.0f, lBold, 0.0f, lBold, 1.0f, rBold, 0.0f, rBold)// whole-texture
+        private val coordVertices_fz = floatArrayOf(1.0f, rBold, 0.0f, rBold, 1.0f, lBold, 0.0f, lBold)// whole-texture
+//        private val coordVertices_fz = floatArrayOf(1.0f, lBold, 0.0f, lBold, 1.0f, rBold, 0.0f, rBold)// whole-texture
 
     }
 }

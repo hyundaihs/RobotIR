@@ -50,14 +50,14 @@ dependencies {
     implementation files('jna.jar')
     implementation files('PlayerSDK.jar')
     implementation files('AudioEngineSDK.jar')
-    implementation 'org.jetbrains.anko:anko-common:0.10.0'
+    implementation 'org.jetbrains.anko:anko-sqlite:0.10.5'
     implementation 'com.android.support:recyclerview-v7:26.1.0'
     implementation 'com.android.support:cardview-v7:26.1.0'
     implementation 'com.squareup.picasso:picasso:2.5.2'
     implementation 'com.contrarywind:Android-PickerView:3.2.7'
     implementation 'com.yanzhenjie:permission:1.1.2'
-    implementation files('IR_SDK.jar')
     implementation files('QiHanConnect.jar')
     implementation 'com.google.code.gson:gson:2.8.0'
     implementation project(':circleselector')
+    implementation project(':frared')
 }
