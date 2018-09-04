@@ -30,7 +30,7 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
     override fun update(`object`: Any?) {
         if (`object` is IR_ImageData) {
             val ir_ImageData = `object`
-            if (isPeizhund) {
+            if (App.isPeizhund) {
                 val posMax = countPosition(ir_ImageData.max_x, ir_ImageData.max_y)
                 val posMin = countPosition(ir_ImageData.min_x, ir_ImageData.min_y)
                 ir_ImageData.max_x = posMax[0]
@@ -38,7 +38,6 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
                 ir_ImageData.min_x = posMin[0]
                 ir_ImageData.min_y = posMin[1]
             }
-
             if (isPeizhun) {
                 mTriangle.updateVertex(ir_ImageData, pointVL1_x, pointVL1_y, pointVL2_x, pointVL2_y, pointVL3_x, pointVL3_y)
             } else {
@@ -46,8 +45,6 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
             }
             maxBitmap = initFontBitmap(ir_ImageData.max_temp, true)
             minBitmap = initFontBitmap(ir_ImageData.min_temp)
-
-
             if (null != maxBitmap && !maxBitmap!!.isRecycled) {
                 maxTexBitmap.updateVertex(ir_ImageData, ir_ImageData.max_x, ir_ImageData.max_y)
             }
@@ -134,6 +131,9 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
                 if (w != mVideoWidth && h != mVideoHeight) {
                     this.mVideoWidth = w
                     this.mVideoHeight = h
+                    val yarraySize = mVideoWidth * mVideoHeight
+                    val uvarraySize = yarraySize / 4
+                    myData = ByteArray(yarraySize + uvarraySize * 2)
                 }
             }
         }
@@ -142,10 +142,9 @@ class GLFrameRenderer(private val mTargetSurface: GLSurfaceView? = null) : MyGlR
     /**
      * this method will be called from native code, it's used for passing yuv data to me.
      */
-    fun update(data: ByteArray, ir_ImageData: IR_ImageData) {
+    fun update(data: ByteArray) {
         synchronized(this) {
             myData = data
-            update(ir_ImageData)
         }
         mTargetSurface?.requestRender()
     }

@@ -26,15 +26,13 @@ class HcvisionUtil {
 //        val m_oIPAddr = "192.168.3.10"
         val m_oUser = "admin"
         val m_oPsd = "admin123456"
-//        val m_oUser = "admin"
+        //        val m_oUser = "admin"
 //        val m_oPsd = "a@123456"
         val m_oPort = 8000
 
         var width = 0
         var height = 0
     }
-
-//    var dataCacheUtil: DataCacheUtil? = null
 
 
     fun init(): Boolean {
@@ -137,7 +135,7 @@ class HcvisionUtil {
             if (iDataSize > 0) {
 
                 if (!Player.getInstance().setStreamOpenMode(m_iPort,
-                                iStreamMode)) // set stream mode
+                        iStreamMode)) // set stream mode
                 {
                     return
                 }
@@ -145,7 +143,7 @@ class HcvisionUtil {
                     return
                 }
                 if (!Player.getInstance().openStream(m_iPort, pDataBuffer,
-                                iDataSize, 6 * 1024 * 1024)) // open stream
+                        iDataSize, 6 * 1024 * 1024)) // open stream
                 {
                     return
                 }
@@ -153,13 +151,18 @@ class HcvisionUtil {
 //                    return
 //                }
                 if (!Player.getInstance().setDecodeCB(m_iPort, PlayerCallBack.PlayerDecodeCB { //
-                            nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
-                            ->
-                            App.vlData = data
-                            width = nWidth
-                            height = nHeight
-                            MainActivity.hcRenderSet = true
-                        })) {
+                    nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
+                    ->
+                    //                    if (null != dataCacheUtil) {
+//                    }else{
+//                        dataCacheUtil = DataCacheUtil(nDataLen)
+//                    }
+//                    dataCacheUtil!!.put(data)
+                    App.vlData = data
+                    width = nWidth
+                    height = nHeight
+                    MainActivity.hcRenderSet = true
+                })) {
                 }
 //                if (!Player.getInstance().setDisplayBuf(m_iPort, 15)) {
 //                    return
@@ -170,8 +173,7 @@ class HcvisionUtil {
                 }
                 return
             }
-        }
-        else {
+        } else {
             // Log.i(TAG, "处理流数据");
             if (iDataSize > 0) {
                 var i = 0

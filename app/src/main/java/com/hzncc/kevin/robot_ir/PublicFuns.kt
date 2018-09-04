@@ -3,6 +3,7 @@ package com.hzncc.kevin.robot_ir
 import android.app.ActivityManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.*
 import android.opengl.GLES20
@@ -10,7 +11,13 @@ import android.opengl.GLException
 import android.util.Log
 import com.bigkoo.pickerview.OptionsPickerView
 import com.hzncc.kevin.robot_ir.data.Log_Data
+import com.hzncc.kevin.robot_ir.utils.DefaultRationale
+import com.hzncc.kevin.robot_ir.utils.PermissionSetting
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
+import com.yanzhenjie.permission.Action
+import com.yanzhenjie.permission.AndPermission
+import com.yanzhenjie.permission.Permission
+import org.jetbrains.anko.toast
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -54,6 +61,43 @@ fun Any.detectOpenGLES20(context: Context): Boolean {
     val info = am.deviceConfigurationInfo
     return info.reqGlEsVersion >= 0x20000
 }
+
+val mPermissions = arrayOf(Permission.READ_EXTERNAL_STORAGE,
+        Permission.WRITE_EXTERNAL_STORAGE
+)
+
+fun Context.requestPermission(onAccepted: ((permissions: Array<String>) -> Unit)? = null,
+                              onDenied: ((permissions: List<String>) -> Unit)? = null) {
+    val mRationale = DefaultRationale()
+    val mSetting = PermissionSetting(this)
+    AndPermission.with(this)
+            .permission(mPermissions)
+            .rationale(mRationale)
+            .onGranted(Action {
+                if (null != onAccepted) {
+                    onAccepted(mPermissions)
+                } else {
+                    toast("权限获取成功")
+                }
+            })
+            .onDenied(Action { permissions ->
+                if (AndPermission.hasAlwaysDeniedPermission(this, permissions)) {
+                    mSetting.showSetting(permissions, DialogInterface.OnClickListener { _, _ ->
+                        if (null != onDenied) {
+                            onDenied(permissions)
+                        }
+                    })
+                } else {
+                    if (null != onDenied) {
+                        onDenied(permissions)
+                    } else {
+                        toast("权限获取失败")
+                    }
+                }
+            })
+            .start()
+}
+
 
 /**
  * @param vertexs float 数组
@@ -197,7 +241,7 @@ val actionSaveBitmap: String = "ACTION_SAVE_BITMAP"
 var saveName = ""
 
 //图片保存
-fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false, time: Long, isMaxWarn: Boolean, warnTemp: Float) {
+fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false, time: Long, isMaxWarn: Boolean, warnTemp: Float): Log_Data? {
     var path = ""
     if (isIR) {
         path = SDCardUtil.IMAGE_IR
@@ -207,7 +251,7 @@ fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false, time:
     val folder = File(path)
     if (!folder.exists()) {
         E("save bitmap failed,path is not exist")
-        return
+        return null
     }
     val jpegName = path + fileName
     try {
@@ -220,13 +264,16 @@ fun Context.saveBitmap(fileName: String, b: Bitmap, isIR: Boolean = false, time:
         e.printStackTrace()
     }
     if (saveName == fileName) {
-        App.instance.mData.add(0, Log_Data(fileName, fileName, time,
-                isMaxWarn = isMaxWarn, warnTemp = warnTemp))
+        val log = Log_Data(fileName, fileName, time,
+                isMaxWarn = isMaxWarn, warnTemp = warnTemp)
+        App.instance.mData.add(0, log)
         val intent = Intent(actionSaveBitmap)
         intent.putExtra("temp", warnTemp)
         sendBroadcast(intent)
+        return log
     } else {
         saveName = fileName
+        return null
     }
 }
 
@@ -264,7 +311,7 @@ val nums: List<String> = arrayListOf("0", "1", "2", "3", "4", "5", "6", "7", "8"
 fun Any.getCorrectTemp(option1: Int, option2: Int, option3: Int): Float {
     var rel = 0.1f
     if (option1 == 0) {
-        rel = rel * option3 + option2 * -1
+        rel = (rel * option3 + option2) * -1
     } else {
         rel = rel * option3 + option2
     }

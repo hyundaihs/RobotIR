@@ -86,7 +86,8 @@ public class GLES20BackEnv_VL {
 
     public void setInput(byte[] data, int w, int h, IR_ImageData iR_ImageData) {
         renderer.update(w, h);
-        renderer.update(data, iR_ImageData);
+        renderer.update(iR_ImageData);
+        renderer.update(data);
     }
 
     private int createTexture(Bitmap bmp) {

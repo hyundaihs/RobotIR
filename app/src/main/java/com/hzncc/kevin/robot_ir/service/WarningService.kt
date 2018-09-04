@@ -27,32 +27,36 @@ class WarningService : Service() {
         super.onCreate()
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         mMediaPlayer.start()
-        if (App.instance.mData.size > 0)
-            sendMessage(this, SDCardUtil.IMAGE_IR + App.instance.mData[0].irImage,
-                    SDCardUtil.IMAGE_VL + App.instance.mData[0].vlImage,
+        if (null != MyService.logData && null != intent) {
+            sendMessage(this, SDCardUtil.IMAGE_IR + MyService.logData?.irImage,
+                    SDCardUtil.IMAGE_VL + MyService.logData?.vlImage,
                     intent.getFloatExtra("temp", 0f))
+        }
         return super.onStartCommand(intent, flags, startId)
     }
 
     fun sendMessage(context: Context, ir: String, vl: String, temp: Float) {
-        val contacts = QiHanConnectUtil.getContactInfo(context)
-        if (null != contacts && contacts.size > 0) {
-            if (!QiHanConnectUtil.sendStringMessage2AllContact(context,
-                            contacts, "有新的报警信息,异常温度:$temp℃", "")) {
-                E("sendMessage failed")
+        try {
+            val contacts = QiHanConnectUtil.getContactInfo(context)
+            if (null != contacts && contacts.size > 0) {
+                if (!QiHanConnectUtil.sendStringMessage2AllContact(context,
+                        contacts, "有新的报警信息,异常温度:$temp℃", "")) {
+                    E("sendMessage failed")
+                }
+                val path = ArrayList<String>()
+                path.add(ir)
+                path.add(vl)
+                if (QiHanConnectUtil.sendPicture2AllContact(context, contacts, path) <= 0) {
+                    E("send Pic failed")
+                }
+            } else {
+                E("没有联系人")
             }
-            val path = ArrayList<String>()
-            path.add(ir)
-            path.add(vl)
-            if (QiHanConnectUtil.sendPicture2AllContact(context, contacts, path) <= 0) {
-                E("send Pic failed")
-            }
-        } else {
-            E("没有联系人")
+        }catch (e:Exception){
+            E("获取联系人失败")
         }
-
     }
 
     override fun onDestroy() {

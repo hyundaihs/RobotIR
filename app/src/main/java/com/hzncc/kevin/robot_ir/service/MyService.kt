@@ -9,17 +9,16 @@ import com.hzncc.kevin.frareddemo.ir_sdk.CameraUtil
 import com.hzncc.kevin.frareddemo.ir_sdk.Device_w324_h256
 import com.hzncc.kevin.frareddemo.ir_sdk.Device_w336_h256
 import com.hzncc.kevin.frareddemo.ir_sdk.LeptonStatus
-import com.hzncc.kevin.robot_ir.App
-import com.hzncc.kevin.robot_ir.E
-import com.hzncc.kevin.robot_ir.MainActivity
+import com.hzncc.kevin.robot_ir.*
 import com.hzncc.kevin.robot_ir.MainActivity.Companion.irIP
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
+import com.hzncc.kevin.robot_ir.data.Log_Data
 import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
-import com.hzncc.kevin.robot_ir.saveBitmap
 import com.hzncc.kevin.robot_ir.utils.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
+import org.jetbrains.anko.uiThread
 
 /**
  * RobotIR
@@ -38,6 +37,8 @@ class MyService : Service() {
     companion object {
         var isRuning = false
         var hcvisionUtil = HcvisionUtil()
+        //        var dataCacheUtil: DataCacheUtil? = null
+        var logData: Log_Data? = null
         var viewWidth = 0
         var viewHeight = 0
     }
@@ -56,8 +57,6 @@ class MyService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        cameraUtil = if (irIP == "10.217.39.201") CameraUtil(Device_w324_h256())
-        else CameraUtil(Device_w336_h256())
         doAsync {
             if (isRuning) {
                 stopVL()
@@ -66,10 +65,14 @@ class MyService : Service() {
                 closeIR()
                 Thread.sleep(1000)
             }
-            openIR()
-            startIR()
-            openVL()
-            startVL()
+            uiThread {
+                cameraUtil = if (irIP == "10.217.39.201") CameraUtil(Device_w324_h256())
+                else CameraUtil(Device_w336_h256())
+                openIR()
+                startIR()
+                openVL()
+                startVL()
+            }
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -86,13 +89,23 @@ class MyService : Service() {
         }
     }
 
+    var currFramen = -1L
+
 
     private fun getNextFrame() {
         doAsync {
             Thread.sleep(2000)
             while (isRuning) {
-                if (cameraUtil.isOpened && cameraUtil.status == LeptonStatus.STATUS_RUNNING) {
+                if (cameraUtil.status == LeptonStatus.STATUS_RUNNING) {
+
+                    if (currFramen == cameraUtil.currFrameId) {
+                        continue
+                    } else {
+                        currFramen = cameraUtil.currFrameId
+                    }
+//                    D("frameId = ${cameraUtil.currFrameId}")
                     App.ir_imageData = getNext()
+
                     if (startTime == 0L) {
                         startTime = System.currentTimeMillis()
                     } else {
@@ -147,7 +160,10 @@ class MyService : Service() {
             val mBackEnv = GLES20BackEnv_IR(width, height)
             mBackEnv.setRenderer(GLBitmapRenderer())
             mBackEnv.setInput(ir_imageData)
-            saveBitmap(fileName, mBackEnv.getBitmap(), true, time, isMaxWarn, warnTemp)
+            val log = saveBitmap(fileName, mBackEnv.getBitmap(), true, time, isMaxWarn, warnTemp)
+            if (log != null) {
+                logData = log
+            }
         }
     }
 
@@ -156,20 +172,24 @@ class MyService : Service() {
             val mBackEnv = GLES20BackEnv_VL(width, height)
             mBackEnv.setRenderer(GLFrameRenderer())
             mBackEnv.setInput(App.vlData, HcvisionUtil.width, HcvisionUtil.height, ir_imageData)
-            saveBitmap(fileName, mBackEnv.getBitmap(), time = time, isMaxWarn = isMaxWarn, warnTemp = warnTemp)
+            val log = saveBitmap(fileName, mBackEnv.getBitmap(), time = time, isMaxWarn = isMaxWarn, warnTemp = warnTemp)
+            if (log != null) {
+                logData = log
+            }
         }
     }
 
     private fun getNext(): IR_ImageData {
         val ir_ImageData = IR_ImageData()
-        val raw = ShortArray(cameraUtil.deviceInfo.raw_length)
-        cameraUtil.nextFrame(raw)
+//        val raw = ShortArray(cameraUtil.deviceInfo.raw_length)
+//        cameraUtil.nextFrame(raw)
+//        val bmp = ByteArray(cameraUtil.deviceInfo.bmp_length)
+//        cameraUtil.img_14To8(raw, bmp)
         val bmp = ByteArray(cameraUtil.deviceInfo.bmp_length)
-        cameraUtil.img_14To8(raw, bmp)
+        cameraUtil.getNextBmp(bmp)
         val options = BitmapFactory.Options()
         options.inPreferredConfig = Bitmap.Config.ARGB_8888
-        val bitmap = BitmapFactory.decodeByteArray(bmp, 0, bmp.size, options)
-        ir_ImageData.bitmap = bitmap
+        ir_ImageData.bitmap = BitmapFactory.decodeByteArray(bmp, 0, bmp.size, options)
         ir_ImageData.width = cameraUtil.deviceInfo.width
         ir_ImageData.height = cameraUtil.deviceInfo.height
         App.irWidth = cameraUtil.deviceInfo.width
@@ -178,6 +198,7 @@ class MyService : Service() {
         ir_ImageData.max_y = cameraUtil.maxY
         ir_ImageData.min_x = cameraUtil.minX
         ir_ImageData.min_y = cameraUtil.minY
+
         ir_ImageData.max_temp = cameraUtil.maxTemp + correctTemp
         ir_ImageData.min_temp = cameraUtil.minTemp + correctTemp
         return ir_ImageData

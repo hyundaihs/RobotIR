@@ -9,7 +9,6 @@ import com.hzncc.kevin.robot_ir.data.Log_Data
 import com.hzncc.kevin.robot_ir.utils.Preference
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
 import com.yanzhenjie.permission.AndPermission
-import com.yanzhenjie.permission.PermissionListener
 import org.jetbrains.anko.toast
 
 
@@ -26,7 +25,7 @@ class App : Application() {
         instance = this
         ir_imageData = IR_ImageData()
         SDCardUtil.initAll()
-        checkPermission()
+//        checkPermission()
 
     }
 
@@ -55,22 +54,22 @@ class App : Application() {
         return false
     }
 
-    private fun checkPermission() {
-        AndPermission.with(applicationContext).requestCode(200)
-                .permission(
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                )
-                .callback(object : PermissionListener {
-                    override fun onSucceed(requestCode: Int, grantPermissions: MutableList<String>) {
-//                        toast("权限设置成功")
-                    }
-
-                    override fun onFailed(requestCode: Int, deniedPermissions: MutableList<String>) {
-                        toast("权限获取失败")
-                    }
-                }).start()
-    }
+//    private fun checkPermission() {
+//        AndPermission.with(applicationContext).requestCode(200)
+//                .permission(
+//                        Manifest.permission.READ_EXTERNAL_STORAGE,
+//                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+//                )
+//                .callback(object : PermissionListener {
+//                    override fun onSucceed(requestCode: Int, grantPermissions: MutableList<String>) {
+////                        toast("权限设置成功")
+//                    }
+//
+//                    override fun onFailed(requestCode: Int, deniedPermissions: MutableList<String>) {
+//                        toast("权限获取失败")
+//                    }
+//                }).start()
+//    }
 
     companion object {
         // 伴生对象

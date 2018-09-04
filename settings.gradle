@@ -1,1 +1,1 @@
-include ':app', ':circleselector', ':frared'
+include ':app', ':circleselector', ':ir_sdk'

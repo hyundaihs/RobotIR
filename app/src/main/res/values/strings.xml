@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">红外温度监测</string>
+    <string name="setting">设置</string>
+
+    <string name="resume">继续</string>
+
+    <string name="cancel">取消</string>
+
+    <string name="ok">同意</string>
+
+    <string name="no">拒绝</string>
+
+    <string name="successfully">权限获取成功</string>
+
+    <string name="failure">权限获取失败</string>
+
+    <string name="title_dialog">提示</string>
+
+    <string name="message_permission_rationale">授予下列权限以继续该程序:\n\n%1$s</string>
+
+    <string name="message_permission_always_failed">需要以下权限, 请允许以下权限:\n\n%1$s</string>
 </resources>

@@ -17,9 +17,9 @@ android {
     defaultConfig {
         applicationId "com.hzncc.kevin.robotirir"
         minSdkVersion 18
-        targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
+        targetSdkVersion 21
+        versionCode 3
+        versionName "3.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 //        signingConfig signingConfigs.config
     }
@@ -59,5 +59,6 @@ dependencies {
     implementation files('QiHanConnect.jar')
     implementation 'com.google.code.gson:gson:2.8.0'
     implementation project(':circleselector')
-    implementation project(':frared')
+    implementation 'com.yanzhenjie:permission:2.0.0-rc4'
+    implementation project(':ir_sdk')
 }

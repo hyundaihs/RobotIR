@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun startService() {
         startService(Intent(this, MyService::class.java))
-        startService(Intent(this, MonitorService::class.java))
+        //startService(Intent(this, MonitorService::class.java))
     }
 
 
@@ -138,6 +138,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        requestPermission(null, null)
         window.setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         surfaceViewL.setEGLContextClientVersion(2)
@@ -453,7 +454,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
 
     companion object {
-        var irIP: String by Preference("ir_ip", "10.217.39.201")//202为336
+        var irIP: String by Preference("ir_ip", "10.217.39.202")//202为336
         var vlIP: String by Preference("vl_ip", "10.217.39.200")
         var viewWidth = 0
         var viewHeight = 0
@@ -486,6 +487,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 MyService.viewWidth = surfaceViewL.width
                 MyService.viewHeight = surfaceViewL.height
                 bitIrRender.update(App.ir_imageData)
+                val imageData = App.ir_imageData.copy()
+                hcRender.update(imageData)
             }
         }
     }
@@ -493,11 +496,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     fun openThreadR() {
         doAsync {
             while (isRun) {
-                MyService.viewWidth = surfaceViewR.width
-                MyService.viewHeight = surfaceViewR.height
                 if (null != App.vlData) {
+                    MyService.viewWidth = surfaceViewR.width
+                    MyService.viewHeight = surfaceViewR.height
                     hcRender.update(HcvisionUtil.width, HcvisionUtil.height)
-                    hcRender.update(App.vlData!!, App.ir_imageData)
+                    hcRender.update(App.vlData!!)
                 }
             }
         }

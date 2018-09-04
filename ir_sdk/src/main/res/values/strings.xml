@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">红外检测</string>
+
+    <string-array name="devices">
+        <item>80x60</item>    <!-- 0 -->
+        <item>324x256</item>  <!-- 1 -->
+        <item>336x256</item>  <!-- 1 -->
+    </string-array>
+
+    <string-array name="color_table">
+        <item>常规灰度</item>   <!-- 0 -->
+        <item>逆灰度</item>     <!-- 1 -->
+        <item>红色饱和度</item>  <!-- 2 -->
+        <item>绿色饱和度</item>  <!-- 3 -->
+        <item>蓝色饱和度</item>  <!-- 4 -->
+        <item>黄色饱和度</item>  <!-- 5 -->
+        <item>青色饱和度</item>  <!-- 6 -->
+        <item>紫色饱和度</item>  <!-- 7 -->
+        <item>彩虹编码1</item>   <!-- 8 -->
+        <item>彩虹编码2</item>   <!-- 9 -->
+        <item>热金属1</item>     <!-- 10 -->
+        <item>热金属编码2</item>  <!-- 11 -->
+    </string-array>
+</resources>

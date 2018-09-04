@@ -10,7 +10,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/circleselector" />
-            <option value="$PROJECT_DIR$/frared" />
+            <option value="$PROJECT_DIR$/ir_sdk" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
