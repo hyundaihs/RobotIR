@@ -305,6 +305,34 @@ fun Context.showPicker(selected: Int = 1, list: List<Int>, isMax: Boolean, liste
     pvOptions.show()
 }
 
+fun Context.showFloatPicker(selected: Int = 1, selected2: Int = 1, selected3: Int = 1, isMax: Boolean, listener: (Int, Int, Int) -> Unit) {
+    val pvOptions = OptionsPickerView.Builder(this, OptionsPickerView.OnOptionsSelectListener { options1, option2, options3, v ->
+        //返回的分别是三个级别的选中位置
+        listener.invoke(options1, option2, options3)
+    })
+            .setSubmitText("确定")//确定按钮文字
+            .setCancelText("取消")//取消按钮文字
+            .setTitleText(if (isMax) "最高温度报警" else "最低温度报警")//标题
+            .setSubCalSize(18)//确定和取消文字大小
+            .setTitleSize(20)//标题文字大小
+            .setTitleColor(Color.BLACK)//标题文字颜色
+            .setSubmitColor(Color.BLUE)//确定按钮文字颜色
+            .setCancelColor(Color.BLUE)//取消按钮文字颜色
+//                .setTitleBgColor(-0xcccccd)//标题背景颜色 Night mode
+//                .setBgColor(-0x1000000)//滚轮背景颜色 Night mode
+            .setContentTextSize(18)//滚轮文字大小
+            .setLabels("", ".", "")//设置选择的三级单位
+            //                .setLabels("省", "市", "区")//设置选择的三级单位
+            //                .isCenterLabel(false) //是否只显示中间选中项的label文字，false则每项item全部都带有label。
+            .setCyclic(false, false, false)//循环与否
+            .setSelectOptions(selected, selected2, selected3)  //设置默认选中项
+            .setOutSideCancelable(true)//点击外部dismiss default true
+            .isDialog(true)//是否显示为对话框样式
+            .build()
+    pvOptions.setNPicker(nums, nums, nums)//添加数据源
+    pvOptions.show()
+}
+
 val sign: List<String> = arrayListOf("-", "+")
 val nums: List<String> = arrayListOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
 
@@ -324,8 +352,18 @@ fun Any.getCorrentIndex(tempra: Float, rel: IntArray) {
     } else {
         rel[0] = 0
     }
-    rel[1] = (tempra / 1).toInt()
-    rel[2] = ((tempra - rel[1]) * 10).toInt()
+    rel[1] = Math.abs(tempra).toInt()
+    rel[2] = ((Math.abs(tempra) - rel[1]) * 10).toInt()
+}
+
+fun Any.getFloatTemp(option1: Int, option2: Int, option3: Int): Float {
+    return option1.toFloat() * 10 + option2.toFloat() + option3.toFloat() * 0.1f
+}
+
+fun Any.getFloatIndex(tempra: Float, rel: IntArray) {
+    rel[0] = (tempra / 10).toInt()
+    rel[1] = tempra.toInt() - rel[0] * 10
+    rel[2] = ((tempra - rel[0] * 10 - rel[1]) * 10).toInt()
 }
 
 /**

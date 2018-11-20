@@ -37,7 +37,6 @@ import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.renderers.GLBitmapRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLFrameRenderer
 import com.hzncc.kevin.robot_ir.renderers.GLRGBRenderer
-import com.hzncc.kevin.robot_ir.service.MonitorService
 import com.hzncc.kevin.robot_ir.service.MyService
 import com.hzncc.kevin.robot_ir.utils.FileUtil
 import com.hzncc.kevin.robot_ir.utils.HcvisionUtil
@@ -45,6 +44,7 @@ import com.hzncc.kevin.robot_ir.utils.Preference
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
 import com.sp.peizhun.PeiZhunUtil
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.login.view.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import java.io.File
@@ -90,9 +90,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private var maxWarn by Preference("max_warn", 0)
-    private var minWarn by Preference("min_warn", 0)
+    private var maxWarn by Preference("max_warn", 0f)
+    private var minWarn by Preference("min_warn", 0f)
     private var correctTemp: Float by Preference("correct_temp", 0.0f)
+    private var password: String by Preference("password", "admin")
     private var isWarn by Preference("isWarn", 0)
     private var isPeizhun = false
     private var irDownX = 0f
@@ -114,7 +115,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         super.onResume()
         val intentFilter = IntentFilter(actionSaveBitmap)
         registerReceiver(broadcastReceiver, intentFilter)
-
     }
 
     override fun onDestroy() {
@@ -159,6 +159,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         ipAlert.setOnClickListener {
             showDialog()
         }
+        changePsd.setOnClickListener {
+            changePsd()
+        }
 
         surfaceViewL.setOnClickListener {
             if (!isClick) {
@@ -176,7 +179,80 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         initDatas()
         openThreadL()
         openThreadR()
-        startService()
+        showLogin()
+    }
+
+    fun changePsd() {
+        val dialog = AlertDialog.Builder(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.login,
+                null, false)
+        dialog.setView(view)
+        dialog.setCancelable(false)
+        dialog.setTitle("修改密码")
+        view.oldPsd.visibility = View.VISIBLE
+        view.loginPassword.setHint("请输入新密码")
+        dialog.setPositiveButton("确定", object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface?, which: Int) {
+                if (view.oldPsd.text.trim().isEmpty()) {
+                    toast("旧密码不能为空")
+                    changePsd()
+                    return
+                }
+                if (view.loginPassword.text.trim().isEmpty()) {
+                    toast("新密码不能为空")
+                    changePsd()
+                    return
+                }
+                if (password == view.oldPsd.text.trim().toString()) {
+                    toast("修改成功")
+                    password = view.loginPassword.text.trim().toString()
+                } else {
+                    toast("旧密码验证错误")
+                    changePsd()
+                }
+            }
+        })
+        dialog.setNegativeButton("取消", object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface?, which: Int) {
+                toast("取消配置")
+            }
+        })
+        dialog.create()
+        dialog.show()
+    }
+
+    fun showLogin() {
+        val dialog = AlertDialog.Builder(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.login,
+                null, false)
+        dialog.setView(view)
+        dialog.setCancelable(false)
+        dialog.setTitle("登录")
+        view.loginPassword.setHint("请输入密码")
+        dialog.setPositiveButton("确定", object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface?, which: Int) {
+                if (view.loginPassword.text.trim().isEmpty()) {
+                    toast("密码不能为空")
+                    showLogin()
+                    return
+                }
+                if (password == view.loginPassword.text.trim().toString()) {
+                    toast("登录成功")
+                    App.isLogined  = true
+                    startService()
+                } else {
+                    toast("密码错误" + password)
+                    showLogin()
+                }
+            }
+        })
+        dialog.setNegativeButton("退出", object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface?, which: Int) {
+                finish()
+            }
+        })
+        dialog.create()
+        dialog.show()
     }
 
     fun count() {
@@ -408,39 +484,33 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun showCorrectTmpPickers() {
         val rel = IntArray(3)
-        if (correctTemp > 0) {
-            getCorrentIndex(correctTemp, rel)
-        }
-        showTempPicker(rel[0], rel[1], rel[2], { option1, option2, option3 ->
+        getCorrentIndex(correctTemp, rel)
+        showTempPicker(rel[0], rel[1], rel[2]) { option1, option2, option3 ->
             correctTemp = getCorrectTemp(option1, option2, option3)
             correct.text = "温度补偿:$correctTemp℃"
-        })
+        }
     }
 
     private fun showPickers(isMax: Boolean = false) = if (isMax) {
-        var select = 0
+        val rel = IntArray(3)
         if (maxWarn > 0) {
-            select = options.indexOf(maxWarn)
-        } else {
-            select = 1
+            getFloatIndex(maxWarn, rel)
         }
-        showPicker(select, options, isMax, { //
-            content: String, position: Int ->
-            max.text = "高温报警:$content℃"
-            maxWarn = content.toInt()
-        })
+        showFloatPicker(rel[0], rel[1], rel[2], isMax) { //
+            option1, option2, option3 ->
+            maxWarn = getFloatTemp(option1, option2, option3)
+            max.text = "高温报警:$maxWarn℃"
+        }
     } else {
-        var select = 0
+        val rel = IntArray(3)
         if (minWarn > 0) {
-            select = options.indexOf(minWarn)
-        } else {
-            select = 1
+            getFloatIndex(minWarn, rel)
         }
-        showPicker(select, options, isMax, { //
-            content, position ->
-            min.text = "低温报警:$content℃"
-            minWarn = content.toInt()
-        })
+        showFloatPicker(rel[0], rel[1], rel[2], isMax) { //
+            option1, option2, option3 ->
+            minWarn = getFloatTemp(option1, option2, option3)
+            min.text = "低温报警:$minWarn℃"
+        }
     }
 
     fun closeThread() {

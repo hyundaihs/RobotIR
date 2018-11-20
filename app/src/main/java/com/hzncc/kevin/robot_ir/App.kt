@@ -1,14 +1,14 @@
 package com.hzncc.kevin.robot_ir
 
-import android.Manifest
+import android.app.Activity
 import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
+import android.os.Bundle
 import com.hzncc.kevin.robot_ir.data.IR_ImageData
 import com.hzncc.kevin.robot_ir.data.Log_Data
 import com.hzncc.kevin.robot_ir.utils.Preference
 import com.hzncc.kevin.robot_ir.utils.SDCardUtil
-import com.yanzhenjie.permission.AndPermission
 import org.jetbrains.anko.toast
 
 
@@ -26,8 +26,68 @@ class App : Application() {
         ir_imageData = IR_ImageData()
         SDCardUtil.initAll()
 //        checkPermission()
+        initBackgroundCallBack()
+    }
+
+    private fun initBackgroundCallBack() {
+        registerActivityLifecycleCallbacks(MyCallBack())
+    }
+
+    private inner class MyCallBack : ActivityLifecycleCallbacks {
+        override fun onActivityPaused(activity: Activity?) {
+        }
+
+        override fun onActivityResumed(activity: Activity?) {
+        }
+
+        override fun onActivityStarted(activity: Activity?) {
+            appCount++
+            if (isRunInBackground) {
+                //应用从后台回到前台 需要做的操作
+                if (null != activity)
+                    back2App(activity)
+            }
+
+        }
+
+        override fun onActivityDestroyed(activity: Activity?) {
+        }
+
+        override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {
+        }
+
+        override fun onActivityStopped(activity: Activity?) {
+            appCount--
+            if (appCount == 0) {
+                //应用进入后台 需要做的操作
+                if (null != activity)
+                    leaveApp(activity)
+            }
+        }
+
+        override fun onActivityCreated(activity: Activity?, savedInstanceState: Bundle?) {
+        }
 
     }
+
+    /**
+     * 从后台回到前台需要执行的逻辑
+     *
+     * @param activity
+     */
+    private fun back2App(activity: Activity) {
+        isRunInBackground = false
+    }
+
+    /**
+     * 离开应用 压入后台或者退出应用
+     *
+     * @param activity
+     */
+    private fun leaveApp(activity: Activity) {
+        isRunInBackground = true
+    }
+
 
     /**
      * 程序是否在前台运行
@@ -102,7 +162,11 @@ class App : Application() {
 
         var irWidth = 0
         var irHeight = 0
-//        var vlWidth = 0
+        //        var vlWidth = 0
 //        var vlHeight = 0
+        var appCount = 0
+        var isLogined = false
+        var isRunInBackground = false
+
     }
 }
