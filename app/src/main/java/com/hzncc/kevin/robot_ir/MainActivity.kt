@@ -115,6 +115,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         super.onResume()
         val intentFilter = IntentFilter(actionSaveBitmap)
         registerReceiver(broadcastReceiver, intentFilter)
+        if(!App.isLogined){
+            showLogin()
+        }
     }
 
     override fun onDestroy() {
@@ -179,7 +182,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         initDatas()
         openThreadL()
         openThreadR()
-        showLogin()
     }
 
     fun changePsd() {
@@ -239,7 +241,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 if (password == view.loginPassword.text.trim().toString()) {
                     toast("登录成功")
                     App.isLogined  = true
-                    startService()
+                    //if(!MyService.isRuning){
+                        startService()
+                    //}
                 } else {
                     toast("密码错误" + password)
                     showLogin()

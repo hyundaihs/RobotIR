@@ -85,6 +85,7 @@ class App : Application() {
      * @param activity
      */
     private fun leaveApp(activity: Activity) {
+        isLogined = false
         isRunInBackground = true
     }
 
