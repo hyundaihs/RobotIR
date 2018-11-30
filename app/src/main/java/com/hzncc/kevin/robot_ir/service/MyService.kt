@@ -27,8 +27,8 @@ import org.jetbrains.anko.uiThread
 class MyService : Service() {
 
     private var correctTemp: Float by Preference("correct_temp", 0.0f)
-    private var maxWarn by Preference("max_warn", 0)
-    private var minWarn by Preference("min_warn", 0)
+    private var maxWarn by Preference("max_warn", 0f)
+    private var minWarn by Preference("min_warn", 0f)
     private var isWarn by Preference("isWarn", 0)
     //    private var is324 by Preference("is324", 336)
     var cameraUtil = if (irIP == "10.217.39.201") CameraUtil(Device_w324_h256())

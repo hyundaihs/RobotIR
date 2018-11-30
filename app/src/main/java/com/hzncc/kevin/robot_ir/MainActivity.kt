@@ -182,6 +182,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         initDatas()
         openThreadL()
         openThreadR()
+        startService()
     }
 
     fun changePsd() {
@@ -242,7 +243,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     toast("登录成功")
                     App.isLogined  = true
                     //if(!MyService.isRuning){
-                        startService()
+
                     //}
                 } else {
                     toast("密码错误" + password)
