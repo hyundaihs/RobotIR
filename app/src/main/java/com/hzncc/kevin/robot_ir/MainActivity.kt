@@ -242,18 +242,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 if (password == view.loginPassword.text.trim().toString()) {
                     toast("登录成功")
                     App.isLogined  = true
-                    //if(!MyService.isRuning){
-
-                    //}
+                    if(!MyService.isRuning){
+                        startService()
+                    }
                 } else {
-                    toast("密码错误" + password)
+                    toast("密码错误")
                     showLogin()
                 }
             }
         })
         dialog.setNegativeButton("退出", object : DialogInterface.OnClickListener {
             override fun onClick(dialog: DialogInterface?, which: Int) {
-                finish()
+                home()
             }
         })
         dialog.create()

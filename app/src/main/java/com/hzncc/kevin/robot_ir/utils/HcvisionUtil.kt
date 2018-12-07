@@ -2,13 +2,11 @@ package com.hzncc.kevin.robot_ir.utils
 
 import com.hikvision.netsdk.HCNetSDK
 import com.hikvision.netsdk.NET_DVR_DEVICEINFO_V30
-import com.hikvision.netsdk.RealPlayCallBack
 import com.hzncc.kevin.robot_ir.App
 import com.hzncc.kevin.robot_ir.D
 import com.hzncc.kevin.robot_ir.E
 import com.hzncc.kevin.robot_ir.MainActivity
 import org.MediaPlayer.PlayM4.Player
-import org.MediaPlayer.PlayM4.PlayerCallBack
 
 
 /**
@@ -95,11 +93,11 @@ class HcvisionUtil {
             previewInfo.byPreviewMode = 0 //预览模式:0- 正常预览，1- 延迟预览
             previewInfo.byProtoType = 0 //应用层取流协议:0- 私有协议，1- RTSP 协议
             previewInfo.hHwnd = null
-            m_iPlayID = HCNetSDK.getInstance().NET_DVR_RealPlay_V40(m_iLogID, previewInfo,
-                    RealPlayCallBack { iRealHandle, iDataType, pDataBuffer, iDataSize ->
-                        processRealData(1, iDataType, pDataBuffer, iDataSize,
-                                Player.STREAM_REALTIME)
-                    })
+            m_iPlayID = HCNetSDK.getInstance().NET_DVR_RealPlay_V40(m_iLogID, previewInfo
+            ) { iRealHandle, iDataType, pDataBuffer, iDataSize ->
+                processRealData(1, iDataType, pDataBuffer, iDataSize,
+                        Player.STREAM_REALTIME)
+            }
         }
         return m_iPlayID >= 0
     }
@@ -135,7 +133,7 @@ class HcvisionUtil {
             if (iDataSize > 0) {
 
                 if (!Player.getInstance().setStreamOpenMode(m_iPort,
-                        iStreamMode)) // set stream mode
+                                iStreamMode)) // set stream mode
                 {
                     return
                 }
@@ -143,26 +141,20 @@ class HcvisionUtil {
                     return
                 }
                 if (!Player.getInstance().openStream(m_iPort, pDataBuffer,
-                        iDataSize, 6 * 1024 * 1024)) // open stream
+                                iDataSize, 6 * 1024 * 1024)) // open stream
                 {
                     return
                 }
 //                if (!Player.getInstance().setHardDecode(m_iPort, 1)) {
 //                    return
 //                }
-                if (!Player.getInstance().setDecodeCB(m_iPort, PlayerCallBack.PlayerDecodeCB { //
-                    nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved
-                    ->
-                    //                    if (null != dataCacheUtil) {
-//                    }else{
-//                        dataCacheUtil = DataCacheUtil(nDataLen)
-//                    }
-//                    dataCacheUtil!!.put(data)
-                    App.vlData = data
-                    width = nWidth
-                    height = nHeight
-                    MainActivity.hcRenderSet = true
-                })) {
+                if (!Player.getInstance().setDecodeCB(m_iPort) { //
+                            nPort, data, nDataLen, nWidth, nHeight, nFrameTime, nDataType, Reserved ->
+                            App.vlData = data
+                            width = nWidth
+                            height = nHeight
+                            MainActivity.hcRenderSet = true
+                        }) {
                 }
 //                if (!Player.getInstance().setDisplayBuf(m_iPort, 15)) {
 //                    return

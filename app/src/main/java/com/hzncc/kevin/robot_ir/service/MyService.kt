@@ -173,6 +173,8 @@ class MyService : Service() {
             mBackEnv.setRenderer(GLFrameRenderer())
             mBackEnv.setInput(App.vlData, HcvisionUtil.width, HcvisionUtil.height, ir_imageData)
             val log = saveBitmap(fileName, mBackEnv.getBitmap(), time = time, isMaxWarn = isMaxWarn, warnTemp = warnTemp)
+//            val bitmap = BitmapFactory.decodeFile("/sdcard/com.hzncc.robot/image/vl/2018-08-30_16_42_29.jpeg")
+//            val log = saveBitmap(fileName, bitmap, time = time, isMaxWarn = isMaxWarn, warnTemp = warnTemp)
             if (log != null) {
                 logData = log
             }
